@@ -185,7 +185,7 @@ const D = [
   ["discovery","Hosts vivos con ping del sistema","barrido rápido por si nmap no está a mano","for i in $(seq 1 254); do ping -c1 -W1 10.10.10.$i | grep 'bytes from'; done"],
 
   // ===== 2. Escaneo de puertos =====
-  ["scan","Escaneo completo (tu plantilla)","-p- los 65535 puertos, -sS SYN scan, -sC scripts por defecto, -sV versiones, -Pn sin ping previo","sudo nmap -p- -sS -sC -sV --min-rate 5000 -n -vvv -Pn {IP} -oN escaneo"],
+  ["scan","Escaneo completo","-p- los 65535 puertos, -sS SYN scan, -sC scripts por defecto, -sV versiones, -Pn sin ping previo","sudo nmap -p- -sS -sC -sV --min-rate 5000 -n -vvv -Pn {IP} -oN escaneo"],
   ["scan","Solo qué puertos están abiertos","escaneo rápido sin versiones para saber primero dónde mirar","nmap -p- --min-rate 5000 -T4 {IP} -oG puertos"],
   ["scan","Versiones y scripts en puertos concretos","-sVC lanza detección de versión y scripts solo sobre los puertos ya conocidos","nmap -p22,80,445 -sVC {IP} -oN versiones"],
   ["scan","Escaneo UDP de los más comunes","-sU escanea UDP; ve servicios que el escaneo TCP no detecta (SNMP, TFTP, DNS)","sudo nmap -sU --top-ports 100 {IP}"],
