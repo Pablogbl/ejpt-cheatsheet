@@ -67,7 +67,29 @@
   input::placeholder{color:var(--dimmer)}
   #ip{color:var(--amber);font-weight:600}
 
-  .filters{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap;align-items:center}
+  .filters-bar{display:flex;align-items:center;gap:10px;margin-top:14px}
+  .filters-toggle{
+    background:var(--panel);border:1px solid var(--line);color:var(--dim);
+    font-family:inherit;font-size:12px;padding:7px 13px;border-radius:8px;
+    cursor:pointer;transition:.13s;display:flex;align-items:center;gap:8px;white-space:nowrap
+  }
+  .filters-toggle:hover{border-color:var(--green-d);color:var(--fg)}
+  .filters-toggle .arrow{transition:transform .2s;font-size:10px;color:var(--dimmer)}
+  .filters-toggle.open .arrow{transform:rotate(180deg)}
+  .filters-toggle .active-badge{
+    color:var(--green);font-size:11px;border-left:1px solid var(--line);padding-left:8px
+  }
+  .clearf{
+    background:transparent;border:none;color:var(--dimmer);font-family:inherit;
+    font-size:11px;cursor:pointer;text-decoration:underline;padding:0
+  }
+  .clearf:hover{color:var(--green)}
+  .filters{
+    display:flex;gap:7px;flex-wrap:wrap;align-items:center;
+    max-height:0;overflow:hidden;opacity:0;margin-top:0;
+    transition:max-height .25s ease,opacity .2s,margin-top .2s
+  }
+  .filters.open{max-height:420px;opacity:1;margin-top:12px}
   .chip{
     background:var(--panel);border:1px solid var(--line);color:var(--dim);
     font-family:inherit;font-size:11.5px;padding:6px 12px;border-radius:20px;
@@ -164,6 +186,14 @@
         <input id="ip" placeholder="10.10.10.10" autocomplete="off">
       </div>
     </div>
+    <div class="filters-bar">
+      <button class="filters-toggle" id="filtersToggle">
+        <span>▚ filtros por fase</span>
+        <span class="arrow">▼</span>
+        <span class="active-badge" id="activeBadge" style="display:none"></span>
+      </button>
+      <button class="clearf" id="clearFilter" style="display:none">quitar filtro</button>
+    </div>
     <div class="filters" id="filters"></div>
   </header>
 
@@ -185,7 +215,7 @@ const D = [
   ["discovery","Hosts vivos con ping del sistema","barrido rápido por si nmap no está a mano","for i in $(seq 1 254); do ping -c1 -W1 10.10.10.$i | grep 'bytes from'; done"],
 
   // ===== 2. Escaneo de puertos =====
-  ["scan","Escaneo completo","-p- los 65535 puertos, -sS SYN scan, -sC scripts por defecto, -sV versiones, -Pn sin ping previo","sudo nmap -p- -sS -sC -sV --min-rate 5000 -n -vvv -Pn {IP} -oN escaneo"],
+  ["scan","Escaneo completo (tu plantilla)","-p- los 65535 puertos, -sS SYN scan, -sC scripts por defecto, -sV versiones, -Pn sin ping previo","sudo nmap -p- -sS -sC -sV --min-rate 5000 -n -vvv -Pn {IP} -oN escaneo"],
   ["scan","Solo qué puertos están abiertos","escaneo rápido sin versiones para saber primero dónde mirar","nmap -p- --min-rate 5000 -T4 {IP} -oG puertos"],
   ["scan","Versiones y scripts en puertos concretos","-sVC lanza detección de versión y scripts solo sobre los puertos ya conocidos","nmap -p22,80,445 -sVC {IP} -oN versiones"],
   ["scan","Escaneo UDP de los más comunes","-sU escanea UDP; ve servicios que el escaneo TCP no detecta (SNMP, TFTP, DNS)","sudo nmap -sU --top-ports 100 {IP}"],
@@ -398,8 +428,30 @@ filtersEl.addEventListener("click",e=>{
   const p=b.dataset.p;
   activePhase=(activePhase===p)?null:p;
   [...filtersEl.children].forEach(c=>c.classList.toggle("on",c.dataset.p===activePhase));
+  updateFilterUI();
+  // al elegir fase, plegar el panel para que no estorbe
+  if(activePhase){ filtersEl.classList.remove("open"); toggleBtn.classList.remove("open"); }
   render();
 });
+
+const toggleBtn=$("#filtersToggle"), activeBadge=$("#activeBadge"), clearBtn=$("#clearFilter");
+toggleBtn.addEventListener("click",()=>{
+  const open=filtersEl.classList.toggle("open");
+  toggleBtn.classList.toggle("open",open);
+});
+clearBtn.addEventListener("click",()=>{
+  activePhase=null;
+  [...filtersEl.children].forEach(c=>c.classList.remove("on"));
+  updateFilterUI(); render();
+});
+function updateFilterUI(){
+  if(activePhase){
+    activeBadge.style.display=""; activeBadge.textContent=META[activePhase].n;
+    clearBtn.style.display="";
+  }else{
+    activeBadge.style.display="none"; clearBtn.style.display="none";
+  }
+}
 
 searchEl.addEventListener("input",()=>{query=searchEl.value.toLowerCase().trim();render()});
 ipEl.addEventListener("input",render);
