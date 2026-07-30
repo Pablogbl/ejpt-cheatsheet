@@ -225,7 +225,7 @@ const D = [
   // ===== 3. Web =====
   ["web","Escaneo de vulnerabilidades web","Nikto prueba miles de rutas y fallos conocidos (ficheros peligrosos, versiones vulnerables)","nikto -h http://{IP}"],
   ["web","Fuzzing de directorios y ficheros","dirb prueba cada palabra del diccionario como ruta para descubrir contenido oculto","dirb http://{IP} /usr/share/wordlists/dirb/common.txt"],
-  ["web","Fuzzing de rutas con ffuf","FUZZ marca dónde se prueba cada palabra; -c colorea la salida","ffuf -u http://{IP}/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -c"],
+  ["web","Fuzzing de rutas con ffuf","FUZZ marca dónde se prueba cada palabra; -c colorea la salida","ffuf -u http://{IP}/FUZZ -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -c"],
   ["web","Fuzzing probando extensiones","-e añade cada extensión a cada palabra: busca admin.php, backup.txt, etc.","ffuf -u http://{IP}/FUZZ -w /usr/share/wordlists/dirb/common.txt -e .php,.txt,.html,.bak -c"],
   ["web","Descubrir vhosts por cabecera Host","fuzzea el Host HTTP; -fs 0 oculta respuestas vacías para ver solo los que existen","ffuf -u http://{IP}/ -H 'Host: FUZZ.target' -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs 0"],
   ["web","Identificar la tecnología del sitio","whatweb detecta servidor, CMS, lenguaje y versiones a partir de las respuestas","whatweb http://{IP}"],
