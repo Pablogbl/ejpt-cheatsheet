@@ -210,9 +210,9 @@
 // fase, descripción, [qué hace], comando({IP})
 const D = [
   // ===== 1. Descubrimiento de red =====
-  ["discovery","Hosts vivos en la subred","-sn hace solo ping scan, sin escanear puertos: lista qué IPs responden en la /24","nmap -sn 10.10.10.0/24 -oN hosts"],
+  ["discovery","Hosts vivos en la subred","-sn hace solo ping scan, sin escanear puertos: lista qué IPs responden en la /24","nmap -sn {IP} -oN hosts"],
   ["discovery","Descubrimiento por ARP","envía peticiones ARP a toda la interfaz local; detecta hosts que ignoran el ping","arp-scan -l"],
-  ["discovery","Hosts vivos con ping del sistema","barrido rápido por si nmap no está a mano","for i in $(seq 1 254); do ping -c1 -W1 10.10.10.$i | grep 'bytes from'; done"],
+  ["discovery","Hosts vivos con ping del sistema","barrido rápido por si nmap no está a mano","for i in $(seq 1 254); do ping -c1 -W1 {IP} | grep 'bytes from'; done"],
 
   // ===== 2. Escaneo de puertos =====
   ["scan","Escaneo completo (tu plantilla)","-p- los 65535 puertos, -sS SYN scan, -sC scripts por defecto, -sV versiones, -Pn sin ping previo","sudo nmap -p- -sS -sC -sV --min-rate 5000 -n -vvv -Pn {IP} -oN escaneo"],
