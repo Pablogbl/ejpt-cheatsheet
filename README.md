@@ -4,27 +4,38 @@ Cheatsheet interactiva de pentesting en un solo fichero HTML. Pensada para tener
 
 **Web:** https://pablogbl.github.io/ejpt-cheatsheet/
 
-## Qué incluye
+## Dos vistas
 
-Más de 130 comandos organizados por las fases de un pentest:
+**⌘ Comandos** — más de 160 comandos organizados por las fases de un pentest, con buscador, filtros por fase, IP dinámica y copiado al clic.
 
-- Descubrimiento de red y escaneo de puertos
+**▤ Guías** — 17 guías paso a paso de "qué hacer en cada situación", encadenadas entre sí: cada una termina indicando hacia dónde seguir (web → conseguir shell → escalar → pivotar).
+
+## Comandos incluidos
+
+- Descubrimiento de red y escaneo de puertos (nmap)
 - Enumeración por servicio: web, WordPress, SMB, FTP, DNS, bases de datos, RDP, LDAP, NFS, SMTP
 - Web ofensiva: SQLi, sqlmap, LFI, webshells
 - Búsqueda de exploits y fuerza bruta
 - Cracking de hashes
+- Esteganografía y forense de ficheros
 - Metasploit y generación de payloads con msfvenom
 - Reverse/bind shells y estabilización de TTY
 - Transferencia de archivos (Linux y Windows)
-- Post-explotación, pivoting y escalada de privilegios (Linux y Windows)
+- Post-explotación, pivoting (autoroute + proxychains) y escalada de privilegios (Linux y Windows)
+
+## Guías paso a paso
+
+Metodología general, cómo enfocar el examen, y el flujo concreto ante cada situación: encontrar una web, SMB/FTP, SSH, MySQL/MSSQL, WordPress, una máquina Windows, tener una shell, escalar privilegios, pivotar a la red interna, pasar archivos, explotar parámetros web, recursos externos y qué hacer cuando te atascas.
 
 ## Características
 
+- **Dos vistas** conmutables: comandos y guías.
 - **IP dinámica** — escríbela una vez y aparece en cada comando.
-- **Buscador** en tiempo real y **filtros por fase**.
+- **Buscador** en tiempo real y **filtros por fase** plegables.
 - **Copiar al clic** con un botón en cada comando.
+- **Guías encadenadas** — cada una enlaza a la siguiente fase.
+- **Recursos externos** enlazados (GTFOBins, LOLBAS, revshells, HackTricks, Wappalyzer, CyberChef…).
 - **Sin dependencias** — un único `index.html`, funciona sin conexión abriéndolo en el navegador.
-- Cada comando lleva una explicación breve de qué hace y para qué sirven sus flags.
 
 ## Uso
 
