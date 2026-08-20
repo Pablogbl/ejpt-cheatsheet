@@ -210,6 +210,11 @@
     display:inline-block;margin:2px 0
   }
   .guide-body li b{color:var(--fg);font-weight:600}
+  .guide-body a.ext{
+    color:var(--cyan);text-decoration:none;border-bottom:1px dotted var(--cyan)
+  }
+  .guide-body a.ext:hover{color:var(--green);border-bottom-color:var(--green)}
+  .guide-body a.ext::after{content:" ↗";font-size:10px;opacity:.7}
   .guide-body .note{
     margin-top:12px;padding:10px 12px;background:var(--bg);border-left:2px solid var(--amber);
     border-radius:4px;color:var(--dim);font-size:12.5px;font-style:italic
@@ -674,7 +679,7 @@ const GUIDES = [
   [["web","Encontré un puerto 80"],["services","Encontré SMB/FTP"],["shell","Ya tengo shell"]]],
 
   ["🌐","Encuentro un puerto 80/443 (web)","web",[
-    "Abre la web y mira qué es: <code>whatweb http://IP</code> para tecnología y versión.",
+    "Abre la web y mira qué es: <code>whatweb http://IP</code> o la extensión <a class='ext' href='https://www.wappalyzer.com' target='_blank'>Wappalyzer</a> para tecnología y versión.",
     "Fuzzing de directorios y ficheros: <code>ffuf</code> o <code>dirb</code>. Busca rutas ocultas, paneles de login, backups.",
     "Escaneo de vulnerabilidades: <code>nikto -h http://IP</code>.",
     "Mira el código fuente, comentarios y <code>robots.txt</code>: a veces hay credenciales o rutas.",
@@ -705,7 +710,7 @@ const GUIDES = [
     "Busca exploit: <code>searchsploit servicio version</code>.",
     "Si hay módulo en Metasploit: <code>search</code>, <code>use</code>, rellena <code>options</code>.",
     "Exploit manual: cópialo (<code>searchsploit -m ID</code>), léelo y ajusta IP/puerto antes de lanzarlo.",
-    "Prepara tu listener (<code>nc -lvnp 4444</code>) ANTES de disparar la reverse shell.",
+    "Prepara tu listener (<code>nc -lvnp 4444</code>) ANTES de disparar la reverse shell (genérala en <a class='ext' href='https://www.revshells.com' target='_blank'>revshells.com</a>).",
     "Ejecuta y comprueba que la shell entra.",
   ],"Lee siempre el exploit antes de ejecutarlo: sabe qué hace y qué variables cambiar.",
   [["shell","Conseguí la shell"]]],
@@ -721,8 +726,8 @@ const GUIDES = [
   [["privesc","Escalar a root (Linux)"],["winpriv","Es Windows, escalar"],["pivot","Hay otra red, pivotar"],["transfer","Pasar linpeas/herramientas"]]],
 
   ["🪜","Escalar privilegios (Linux)","privesc",[
-    "<code>sudo -l</code>: si puedes ejecutar algo como root, busca ese binario en <b>GTFOBins</b>.",
-    "Binarios SUID: <code>find / -perm -4000 2>/dev/null</code> y crúzalos con GTFOBins.",
+    "<code>sudo -l</code>: si puedes ejecutar algo como root, busca ese binario en <b><a class='ext' href='https://gtfobins.github.io' target='_blank'>GTFOBins</a></b>.",
+    "Binarios SUID: <code>find / -perm -4000 2>/dev/null</code> y crúzalos con <a class='ext' href='https://gtfobins.github.io' target='_blank'>GTFOBins</a>.",
     "Capabilities: <code>getcap -r / 2>/dev/null</code>.",
     "Tareas cron editables, ficheros de root que puedas escribir, credenciales en configs.",
     "Grupo <b>docker</b> o <b>lxd</b>: escalada directa montando el disco del host.",
@@ -806,6 +811,18 @@ const GUIDES = [
     "Si puedes subir ficheros, sube una webshell y ejecútala (RCE).",
   ],"Cualquier parámetro en una URL es sospechoso: pruébalo contra SQLi y LFI antes de descartarlo.",
   [["creds","Volqué credenciales con sqlmap"],["shell","Conseguí RCE con la webshell"]]],
+
+  ["🧰","Recursos externos (ayudas válidas)","recursos",[
+    "<b><a class='ext' href='https://gtfobins.github.io' target='_blank'>GTFOBins</a></b> — cómo abusar de binarios Unix con SUID/sudo/capabilities para escalar. Imprescindible en escalada Linux.",
+    "<b><a class='ext' href='https://lolbas-project.github.io' target='_blank'>LOLBAS</a></b> — el equivalente de GTFOBins para binarios de Windows.",
+    "<b><a class='ext' href='https://www.revshells.com' target='_blank'>revshells.com</a></b> — generador de reverse shells en todos los lenguajes; pones IP y puerto y copias.",
+    "<b><a class='ext' href='https://book.hacktricks.wiki' target='_blank'>HackTricks</a></b> — la biblia: enumeración y explotación de cada puerto/servicio paso a paso.",
+    "<b><a class='ext' href='https://www.wappalyzer.com' target='_blank'>Wappalyzer</a></b> — extensión del navegador que identifica la tecnología de una web (CMS, framework, versión).",
+    "<b><a class='ext' href='https://gchq.github.io/CyberChef' target='_blank'>CyberChef</a></b> — decodifica y transforma datos (base64, hex, cifrados, URL…) sin instalar nada.",
+    "<b><a class='ext' href='https://crackstation.net' target='_blank'>CrackStation</a></b> — crackea hashes comunes online por si no quieres tirar de John.",
+    "<b><a class='ext' href='https://www.exploit-db.com' target='_blank'>Exploit-DB</a></b> — la web de searchsploit; busca exploits por servicio y versión.",
+  ],"Estas ayudas son válidas en el eJPT y ahorran tiempo. GTFOBins, revshells y HackTricks son las que más vas a abrir.",
+  [["privesc","Ir a escalar (Linux)"],["shell","Volver a la shell"]]],
 
   ["🚩","No sé por dónde seguir (atascado)","stuck",[
     "¿Escaneaste <b>todos</b> los puertos con <code>-p-</code>? Puede haber un servicio en un puerto alto.",
