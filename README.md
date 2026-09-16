@@ -13,7 +13,8 @@ Cheatsheet interactiva de pentesting en un solo fichero HTML. Pensada para tener
 ## Comandos incluidos
 
 - Descubrimiento de red y escaneo de puertos (nmap)
-- Enumeración por servicio: web, WordPress, SMB, FTP, DNS, bases de datos, RDP, LDAP, NFS, SMTP
+- Enumeración por servicio: web, WordPress, SMB, FTP, DNS, bases de datos, RDP, LDAP, NFS, SMTP, SNMP
+- Ataques de red / MITM: captura de hashes con Responder (LLMNR/NBT-NS)
 - Web ofensiva: SQLi, sqlmap, LFI, webshells
 - Búsqueda de exploits y fuerza bruta
 - Cracking de hashes
