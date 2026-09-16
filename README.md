@@ -30,7 +30,7 @@ Metodología general, cómo enfocar el examen, y el flujo concreto ante cada sit
 ## Características
 
 - **Dos vistas** conmutables: comandos y guías.
-- **IP dinámica** — escríbela una vez y aparece en cada comando.
+- **Dos IPs dinámicas** — la del objetivo y la de tu Kali (atacante); cada comando usa la que le corresponde.
 - **Buscador** en tiempo real y **filtros por fase** plegables.
 - **Copiar al clic** con un botón en cada comando.
 - **Guías encadenadas** — cada una enlaza a la siguiente fase.
