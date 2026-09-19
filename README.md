@@ -6,9 +6,9 @@ Cheatsheet interactiva de pentesting en un solo fichero HTML. Pensada para tener
 
 ## Dos vistas
 
-**⌘ Comandos** — más de 160 comandos organizados por las fases de un pentest, con buscador, filtros por fase, IP dinámica y copiado al clic.
+**⌘ Comandos** — más de 210 comandos organizados por las fases de un pentest, con buscador, filtros por fase, IP dinámica y copiado al clic.
 
-**▤ Guías** — 17 guías paso a paso de "qué hacer en cada situación", encadenadas entre sí: cada una termina indicando hacia dónde seguir (web → conseguir shell → escalar → pivotar).
+**▤ Guías** — 18 guías paso a paso de "qué hacer en cada situación", encadenadas entre sí: cada una termina indicando hacia dónde seguir (web → conseguir shell → escalar → pivotar).
 
 ## Comandos incluidos
 
@@ -22,11 +22,15 @@ Cheatsheet interactiva de pentesting en un solo fichero HTML. Pensada para tener
 - Metasploit y generación de payloads con msfvenom
 - Reverse/bind shells y estabilización de TTY
 - Transferencia de archivos (Linux y Windows)
-- Post-explotación, pivoting (autoroute + proxychains) y escalada de privilegios (Linux y Windows)
+- Post-explotación, pivoting (autoroute + proxychains, y barrido de puertos sin nmap por WinRM) y escalada de privilegios (Linux y Windows)
+- Volcado offline de SAM+SYSTEM (impacket-secretsdump) sin necesitar sesión interactiva
+- PwnKit / Polkit (CVE-2021-4034 y CVE-2021-3560) y el truco para saltarse el chequeo de sesión SSH de algunos PoC
+- Ejecución remota por WinRM con NetExec (-x / -X) sin depender de evil-winrm
+- Webshells ASPX que requieren tokens __VIEWSTATE, y RCE en WordPress vía Editor de Temas
 
 ## Guías paso a paso
 
-Metodología general, cómo enfocar el examen, y el flujo concreto ante cada situación: encontrar una web, SMB/FTP, SSH, MySQL/MSSQL, WordPress, una máquina Windows, tener una shell, escalar privilegios, pivotar a la red interna, pasar archivos, explotar parámetros web, recursos externos y qué hacer cuando te atascas.
+Metodología general, cómo enfocar el examen, y el flujo concreto ante cada situación: encontrar una web, SMB/FTP, SSH, MySQL/MSSQL, WordPress, una máquina Windows, tener una shell, escalar privilegios, pivotar a la red interna, pasar archivos, explotar parámetros web, recursos externos, qué hacer cuando te atascas, y qué hacer si solo tienes RCE en Windows y aún no tienes una sesión Meterpreter.
 
 ## Características
 
